@@ -356,7 +356,7 @@ export const BSky = () => {
           <button onclick={clearFeed} style="padding:5px;font-size:20px;">Clear</button>
         </div>
         <div style="position: absolute; right:5px;bottom:5px;">
-          <a href="https://github.com/voneum/skeetscope" target="_blank" innerHTML={SVGs.GithubLogo} title='GitHub'></a>
+          <a href="https://github.com/voneum/s4ag.skeetscope" target="_blank" innerHTML={SVGs.GithubLogo} title='GitHub'></a>
         </div>
       </footer>
 
