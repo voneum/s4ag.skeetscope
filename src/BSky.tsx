@@ -10,12 +10,14 @@ import { SVGs } from './SVGs';
 import { WordBag } from './WordBag';
 import { BarChartRace } from './BarChartRace';
 import RadioButtonArray from './RadioButtonArray';
+import { Terms } from './Terms';
 
 export const BSky = () => {
 
   let elHelpDialog: HTMLDialogElement;
   let wordBags: WordBag[] = [];
   let barcharts:BarChartRace[] = [];
+  let filterTerms:Set<string>[] = [];
   let wordCount = 0;
 
   //let elHtmlDivElements: HTMLDivElement[] = [];
@@ -25,6 +27,7 @@ export const BSky = () => {
 
   const [socketOpen_GetterFn, socketOpen_SetterFn] = createSignal<boolean>(false);
   const [divElements_GetterFn, divElements_SetterFn] = createSignal<HTMLDivElement[]>([]);
+  const [safe_GetterFn, safe_SetterFn] = createSignal<boolean>(true);
 
   const [store, setStore] = createStore<number[]>([]) // A store that is an array
   
@@ -38,6 +41,10 @@ export const BSky = () => {
   createEffect(() => {
     console.log("Selected option changed:", stringType_GetterFn());
     clearFeed();
+  });
+
+  createEffect(() => {
+    console.log("safe mode:", safe_GetterFn());
   });
 
   createEffect(() => {
@@ -207,7 +214,7 @@ export const BSky = () => {
 
 
   function processWord(index: number){
-      let topWords = wordBags[index].GetTopWords(BarChartRace.BAR_COUNT);
+      let topWords = wordBags[index].GetTopWords(BarChartRace.BAR_COUNT,safe_GetterFn());
       
       if (!barcharts[index].IsAnimating){
         barcharts[index].UpdateWords(topWords);
@@ -253,16 +260,29 @@ export const BSky = () => {
       new BarChartRace(">11 letters", divElements_GetterFn()[8]),
     ];
 
+
+    filterTerms = [
+      Terms.AdultHashtagsByLength(4),
+      Terms.AdultHashtagsByLength(5),
+      Terms.AdultHashtagsByLength(6),
+      Terms.AdultHashtagsByLength(7),
+      Terms.AdultHashtagsByLength(8),
+      Terms.AdultHashtagsByLength(9),
+      Terms.AdultHashtagsByLength(10),
+      Terms.AdultHashtagsByLength(11),
+      Terms.AdultHashtagsByLengthGreaterThan(11),
+    ];
+
     wordBags = [
-      new WordBag(),
-      new WordBag(),
-      new WordBag(),
-      new WordBag(),
-      new WordBag(),
-      new WordBag(),
-      new WordBag(),
-      new WordBag(),
-      new WordBag(),
+      new WordBag(filterTerms[0]),
+      new WordBag(filterTerms[1]),
+      new WordBag(filterTerms[2]),
+      new WordBag(filterTerms[3]),
+      new WordBag(filterTerms[4]),
+      new WordBag(filterTerms[5]),
+      new WordBag(filterTerms[6]),
+      new WordBag(filterTerms[7]),
+      new WordBag(filterTerms[8]),
     ];
 
     //update the word counts
@@ -297,16 +317,17 @@ export const BSky = () => {
     messageCount_SetterFn(0);
     dataReceived_SetterFn(0);
     
+    
     wordBags = [
-      new WordBag(),
-      new WordBag(),
-      new WordBag(),
-      new WordBag(),
-      new WordBag(),
-      new WordBag(),
-      new WordBag(),
-      new WordBag(),
-      new WordBag(),
+      new WordBag(filterTerms[0]),
+      new WordBag(filterTerms[1]),
+      new WordBag(filterTerms[2]),
+      new WordBag(filterTerms[3]),
+      new WordBag(filterTerms[4]),
+      new WordBag(filterTerms[5]),
+      new WordBag(filterTerms[6]),
+      new WordBag(filterTerms[7]),
+      new WordBag(filterTerms[8]),
     ];
 
     //update the word counts
@@ -345,6 +366,11 @@ export const BSky = () => {
       <main class={styles.main}>
         <div class={styles.mainHeader}>
           <div>
+            <input id="safeCheck" type='checkbox' checked={safe_GetterFn()} style="margin-right: 3px;" onChange={(e) => {
+              safe_SetterFn(e.currentTarget.checked);
+            }} />
+            <label for="safeCheck"style="margin-right: 10px;">Safe</label>
+
             Bars:
             <select style="margin-left: 3px;"
               onChange={(e) => {

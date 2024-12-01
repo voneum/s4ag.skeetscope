@@ -8,9 +8,12 @@ export class WordBag {
     // Map to track word-to-index mapping in the array.
     private _wordIndexMap: Map<string, number>;
 
-    constructor() {
+    private _filterTerms: Set<string>;
+
+    constructor(filterTerms: Set<string>) {
         this._wordBag = [];
         this._wordIndexMap = new Map();
+        this._filterTerms = filterTerms;
     }
 
     /**
@@ -56,8 +59,26 @@ export class WordBag {
      * @param n - The number of top words to retrieve.
      * @returns An array of objects containing the word and its count.
      */
-    public GetTopWords(n: number): { word: string; count: number }[] {
-        return this._wordBag.slice(0, n);
+    public GetTopWords(n: number, filter:boolean = false ): { word: string; count: number}[] {
+        if (filter){
+            let count = 0;
+            const result: { word: string; count: number }[] = [];
+            for (let i = 0; i < this._wordBag.length; i++) {
+                const element = this._wordBag[i]; 
+                if (!this._filterTerms.has(element.word))               {
+                    result.push(element)
+                    count++;
+                    if (count >= n){ 
+                        break;
+                    }
+                }
+            }
+
+            return result;
+        } else {
+            return this._wordBag.slice(0, n);
+        }
+        
     }
 
     /**

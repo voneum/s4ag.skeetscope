@@ -37,6 +37,7 @@ export class BarChartRace {
 
         // Create the canvas element and append it to the container
         this._canvas = document.createElement("canvas");
+        if (this._canvas)
         this._container.appendChild(this._canvas);
         this._ctx = this._canvas.getContext("2d")!;
 
@@ -44,6 +45,44 @@ export class BarChartRace {
         this.updateCanvasSize();
         
         this._resizeObserver.observe(this._container);
+
+
+        this._canvas.addEventListener("pointerover", (ev:PointerEvent) => {
+            this._canvas.style.cursor = "pointer";
+        }, false);
+        this._canvas.addEventListener("pointermove", (ev:PointerEvent) => {
+            this._canvas.style.cursor = "pointer";
+        }, false);
+        this._canvas.addEventListener("pointerout", (ev:PointerEvent) => {
+            this._canvas.style.cursor = "unset";
+        }, false);
+        this._canvas.addEventListener("pointerdown", (ev:PointerEvent) => {
+            const rect = this._canvas.getBoundingClientRect();
+            //console.log(ev.clientX - rect.left, ev.clientY - rect.top);
+            const index = Math.max(0,Math.floor(10 * (ev.clientY - rect.top) / (30 * BarChartRace.BAR_COUNT))) + 1;
+            //console.log(index, this._activeBars.length);
+            const barIndex = this._activeBars.findIndex((b)=>{ 
+                return b.Rank === index;
+            });
+            const activeBar = this._activeBars[barIndex];
+            //console.log(index, activeBar.Word);
+            if (activeBar.Word.length > 0){
+                if (activeBar.Word[0] === "#" && activeBar.Word.length > 1){
+                    const hashTag = activeBar.Word.slice(1);
+                    window.open(`https://bsky.app/hashtag/${hashTag}`, '_blank')?.focus();
+                } else if (activeBar.Word[0] === "@" && activeBar.Word.length > 1){
+                    const user = activeBar.Word.slice(1);
+                    window.open(`https://bsky.app/profile/${user}`, '_blank')?.focus();
+                } else {
+                    window.open(`https://bsky.app/search?q=${activeBar.Word}`, '_blank')?.focus();
+                }
+                
+            }
+        }, false);
+
+
+        
+
     }
 
     /**
