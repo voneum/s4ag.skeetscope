@@ -28,13 +28,31 @@ export const BSky = () => {
 
   const [store, setStore] = createStore<number[]>([]) // A store that is an array
   
-  const [selectedOption, setSelectedOption] = createSignal("Words");
-  const options = ["Words", "Mentions", "Hashtags"];
+  const [stringType_GetterFn, stringType_SetterFn] = createSignal("Words");
+  const stringTypeOptions = ["Words", "Mentions", "Hashtags"];
+
+  
+  const [activeBars_GetterFn, activeBars_SetterFn] = createSignal<number>(10);
 
   // React to changes in selectedOption
   createEffect(() => {
-    console.log("Selected option changed:", selectedOption());
+    console.log("Selected option changed:", stringType_GetterFn());
     clearFeed();
+  });
+
+  createEffect(() => {
+    console.log("Active bars option changed:", activeBars_GetterFn());
+    BarChartRace.BAR_COUNT = activeBars_GetterFn();
+
+    //divElements_GetterFn()[0].classList.add(styles.divChartContainer);
+
+    for (let i = 0; i < divElements_GetterFn().length; i++) {
+      const element = divElements_GetterFn()[i];
+      element.style.height = `${BarChartRace.BAR_COUNT * 30}px`;
+
+      barcharts[i].Clear();
+    }
+
   });
 
   
@@ -93,7 +111,7 @@ export const BSky = () => {
 
     const handles = TextHelper.ExtractBlueskyHandles(lower);
 
-    if (selectedOption() === "Mentions"){
+    if (stringType_GetterFn() === "Mentions"){
       for (let j = 0; j < handles.length; j++) {
         const word = handles[j];            
         wordCount++;
@@ -116,7 +134,7 @@ export const BSky = () => {
       }
 
       const hashtags = TextHelper.ExtractHashtags(lower);
-      if (selectedOption() === "Hashtags"){
+      if (stringType_GetterFn() === "Hashtags"){
         for (let j = 0; j < hashtags.length; j++) {
           const word = hashtags[j];            
           wordCount++;
@@ -224,15 +242,15 @@ export const BSky = () => {
     divElements_GetterFn()[8].classList.add(styles.divChartContainer);
 
     barcharts = [
-      new BarChartRace("4 letters", divElements_GetterFn()[0],BarChartRace.BAR_COUNT),
-      new BarChartRace("5 letters", divElements_GetterFn()[1],BarChartRace.BAR_COUNT),
-      new BarChartRace("6 letters", divElements_GetterFn()[2],BarChartRace.BAR_COUNT),
-      new BarChartRace("7 letters", divElements_GetterFn()[3],BarChartRace.BAR_COUNT),
-      new BarChartRace("8 letters", divElements_GetterFn()[4],BarChartRace.BAR_COUNT),
-      new BarChartRace("9 letters", divElements_GetterFn()[5],BarChartRace.BAR_COUNT),
-      new BarChartRace("10 letters", divElements_GetterFn()[6],BarChartRace.BAR_COUNT),
-      new BarChartRace("11 letters", divElements_GetterFn()[7],BarChartRace.BAR_COUNT),
-      new BarChartRace(">11 letters", divElements_GetterFn()[8],BarChartRace.BAR_COUNT),
+      new BarChartRace("4 letters", divElements_GetterFn()[0]),
+      new BarChartRace("5 letters", divElements_GetterFn()[1]),
+      new BarChartRace("6 letters", divElements_GetterFn()[2]),
+      new BarChartRace("7 letters", divElements_GetterFn()[3]),
+      new BarChartRace("8 letters", divElements_GetterFn()[4]),
+      new BarChartRace("9 letters", divElements_GetterFn()[5]),
+      new BarChartRace("10 letters", divElements_GetterFn()[6]),
+      new BarChartRace("11 letters", divElements_GetterFn()[7]),
+      new BarChartRace(">11 letters", divElements_GetterFn()[8]),
     ];
 
     wordBags = [
@@ -326,11 +344,23 @@ export const BSky = () => {
       </header>
       <main class={styles.main}>
         <div class={styles.mainHeader}>
-        <RadioButtonArray
-          options={options}
-          selected={selectedOption()}
-          onChange={(value) => setSelectedOption(value)}
-        />
+          <div>
+            Bars:
+            <select style="margin-left: 3px;"
+              onChange={(e) => {
+                activeBars_SetterFn(Number.parseInt(e.currentTarget.value));
+              }}
+            >
+              <option value="5">5</option>
+              <option value="10" selected>10</option>
+              <option value="20">20</option>
+            </select>
+          </div>
+          <RadioButtonArray
+            options={stringTypeOptions}
+            selected={stringType_GetterFn()}
+            onChange={(value) => stringType_SetterFn(value)}
+          />
         </div>
         <div class={styles.mainBody}>
           <For each={divElements_GetterFn()}>

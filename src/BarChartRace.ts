@@ -13,7 +13,7 @@ export class BarChartRace {
     private _name: string = "";
 
     private _wordColors: Map<string, string> = new Map(); // Maps words to their assigned colors
-    private _maxCount: number = 0; // Maximum count for the words (used to scale bars)
+    //private _maxCount: number = 0; // Maximum count for the words (used to scale bars)
     private _currentMaxWordCount = 0; // Current maximum word count in the animation
 
     private _startTime: number = 0; // The timestamp when the animation starts
@@ -30,12 +30,10 @@ export class BarChartRace {
     /**
      * Creates a new BarChartRace instance.
      * @param container The HTML container element to hold the chart
-     * @param maxCount The maximum number of bars to display in the chart
      */
-    constructor(name: string, container: HTMLElement, maxCount: number) {
+    constructor(name: string, container: HTMLElement) {
         this._name = name;
         this._container = container;
-        this._maxCount = maxCount;
 
         // Create the canvas element and append it to the container
         this._canvas = document.createElement("canvas");
@@ -218,12 +216,12 @@ export class BarChartRace {
         }
 
         // Remove any excess bars that are no longer in the words list
-        if (this._activeBars.length > this._maxCount) {
+        if (this._activeBars.length > BarChartRace.BAR_COUNT) {
             for (let i = 0; i < this._activeBars.length; i++) {
                 const currentWord = this._activeBars[i].Word;
                 const index = words.findIndex((r) => { return r.word === currentWord; });
                 if (index === -1) {
-                    this._activeBars[i].SetTargetState(this._activeBars[i].Count, this._maxCount + 2, this._currentMaxWordCount);
+                    this._activeBars[i].SetTargetState(this._activeBars[i].Count, BarChartRace.BAR_COUNT + 2, this._currentMaxWordCount);
                 }
             }
         }

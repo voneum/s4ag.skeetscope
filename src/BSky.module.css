@@ -122,6 +122,9 @@
 }
 
 
+select{
+  font-size: large;
+}
 
 dialog {
   color: #555;
