@@ -30,6 +30,9 @@
   /* background-color: lightgray; */
   min-height: 100px;
   box-sizing: border-box;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .main > .mainHeader {

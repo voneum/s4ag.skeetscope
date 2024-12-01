@@ -1,4 +1,4 @@
-import { For, onMount,createSignal, onCleanup, createEffect } from 'solid-js';
+import { For, onMount,createSignal, onCleanup, createEffect, Show } from 'solid-js';
 import { createStore } from "solid-js/store"
 import { Jetstream } from "./Jetstream";
 import { BSkyApi_Record } from './BSkyApi_Record';
@@ -314,7 +314,7 @@ export const BSky = () => {
         <div style="flex-grow: 1;display:block; align-self: center; margin-left:10px;font-size:clamp(0.75rem, 2vw, 1.1rem);">
           the pulse of Bluesky posts
         </div>
-        <div style="margin-right:15px;display:block; align-self: center;display:flex;cursor:pointer;" onclick={displayHelp}>
+        <div style="margin-right:15px; align-self: center;display:flex;cursor:pointer;" onclick={displayHelp}>
           <div innerHTML={SVGs.BlueSkyHelp}></div>
           <a style="font-size:clamp(0.6rem, 2vw, 1rem);">What's this?</a>
         </div>
@@ -351,8 +351,12 @@ export const BSky = () => {
       </main>
       <footer class={styles.footer} style="display:flex;">
         <div style="margin:auto;">
-          <button onclick={startFeed} disabled={socketOpen_GetterFn()} style="padding:5px;font-size:20px;">Start</button>
-          <button onclick={stopFeed} disabled={!socketOpen_GetterFn()} style="padding:5px;font-size:20px;">Stop</button>
+          <Show when={!socketOpen_GetterFn()}>
+            <button onclick={startFeed} style="padding:5px;font-size:20px;">Resume</button>
+          </Show>
+          <Show when={socketOpen_GetterFn()}>
+            <button onclick={stopFeed} style="padding:5px;font-size:20px;">Pause</button>
+          </Show>
           <button onclick={clearFeed} style="padding:5px;font-size:20px;">Clear</button>
         </div>
         <div style="position: absolute; right:5px;bottom:5px;">
