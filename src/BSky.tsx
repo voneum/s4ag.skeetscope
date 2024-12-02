@@ -22,6 +22,7 @@ export const BSky = () => {
   let hashtagBags: TermBag[] = [];
   let barcharts:BarChartRace[] = [];
   let filterTerms:Set<string>[] = [];
+  let noiseTerms:Set<string>[] = [];
   let termCount = 0;
   let toastId: string = "";
 
@@ -33,6 +34,7 @@ export const BSky = () => {
   const [socketOpen_GetterFn, socketOpen_SetterFn] = createSignal<boolean>(false);
   const [divElements_GetterFn, divElements_SetterFn] = createSignal<HTMLDivElement[]>([]);
   const [safe_GetterFn, safe_SetterFn] = createSignal<boolean>(true);
+  const [noise_GetterFn, noise_SetterFn] = createSignal<boolean>(false);
 
   const [wordCounts_GetterFn, wordCounts_SetterFn] = createStore<number[]>([]) // A store that is an array
   const [mentionCounts_GetterFn, mentionCounts_SetterFn] = createStore<number[]>([]) // A store that is an array
@@ -45,15 +47,26 @@ export const BSky = () => {
   const [activeBars_GetterFn, activeBars_SetterFn] = createSignal<number>(10);
 
   // React to changes in selectedOption
-  createEffect(() => {
-    console.log("Selected option changed:", stringType_GetterFn());
-    blankCharts();
+  createEffect((prev) => {
+    console.log("Selected option changed:", prev, stringType_GetterFn());
+
+    if (prev) { //seems to want to be undefined when it doesn't change ??
+      blankCharts();
+      updateAllCharts();
+    }
     //clearFeed();
   });
 
   createEffect(() => {
     console.log("safe mode:", safe_GetterFn());
+    //updateAllCharts();
   });
+  createEffect(() => {
+    console.log("noise mode:", noise_GetterFn());
+    //updateAllCharts();
+  });
+
+  
 
   createEffect(() => {
     console.log("Active bars option changed:", activeBars_GetterFn());
@@ -208,15 +221,18 @@ export const BSky = () => {
     
     
     if (updateCharts){
-      //console.error("process", wordCount);
-      for (let i = 0; i < 9; i++) {
-        processWord(i);        
-      }
+      updateAllCharts();
     }
 
     updateCharts = false;
 
   });
+
+  function updateAllCharts(){
+    for (let i = 0; i < 9; i++) {
+      processTerms(i);        
+    }
+  }
 
   function processTermByLength(word: string): void {
     let wordLen = word.length;
@@ -251,18 +267,21 @@ export const BSky = () => {
   }
 
 
-  function processWord(index: number){
+  function processTerms(index: number){
 
     let topTerms: { word: string; count: number}[] = [];
 
     switch (stringType_GetterFn()){
       case stringTypeOptions[0]:
-        topTerms = wordBags[index].GetTopTerms(BarChartRace.BAR_COUNT,safe_GetterFn());
+        if (!wordBags || wordBags.length === 0) return;
+        topTerms = wordBags[index].GetTopTerms(BarChartRace.BAR_COUNT,noise_GetterFn());
         break;
       case stringTypeOptions[1]:
+        if (!mentionBags || mentionBags.length === 0) return;
         topTerms = mentionBags[index].GetTopTerms(BarChartRace.BAR_COUNT,safe_GetterFn());
         break;
       case stringTypeOptions[2]:
+        if (!hashtagBags || hashtagBags.length === 0) return;
         topTerms = hashtagBags[index].GetTopTerms(BarChartRace.BAR_COUNT,safe_GetterFn());
         break;
       default:
@@ -283,6 +302,7 @@ export const BSky = () => {
     let divs: HTMLDivElement[] = [];
     barcharts = [];
     filterTerms = [];
+    noiseTerms = [];
     wordBags = [];
     mentionBags = [];
     hashtagBags = [];
@@ -292,7 +312,8 @@ export const BSky = () => {
       const title:string = i < 8 ? `${i+3} letters` : `>${i+2} letters`;
       barcharts.push(new BarChartRace(title, divs[i]));
       filterTerms.push(Terms.AdultHashtagsByLength(i+3));
-      wordBags.push(new TermBag(filterTerms[i]));
+      noiseTerms.push(Terms.TermsByLength(Terms.NoiseTerms(), i+3))
+      wordBags.push(new TermBag(noiseTerms[i]));
       mentionBags.push(new TermBag(filterTerms[i]));
       hashtagBags.push(new TermBag(filterTerms[i]));
     }
@@ -409,7 +430,7 @@ export const BSky = () => {
     mentionBags.length = 0;
     hashtagBags.length = 0;
     for (let i = 0; i < 9; i++) {
-      wordBags.push(new TermBag(filterTerms[i]));
+      wordBags.push(new TermBag(noiseTerms[i]));
       mentionBags.push(new TermBag(filterTerms[i]));
       hashtagBags.push(new TermBag(filterTerms[i]));      
     }
@@ -445,6 +466,38 @@ export const BSky = () => {
 
   }
 
+  function listTerms(){
+
+    const termArray: string[][] = [];
+
+    for (let i = 0; i < wordBags.length; i++) {
+
+      termArray.push([]);
+
+      const terms = wordBags[i];      
+      const allTerms = terms.GetTopTerms(terms.GetDistinctWordCount());
+
+      
+      //console.log(`== ${allTerms[i]} ==================`);
+
+      allTerms.forEach((term)=> {
+        //console.log(term.word, term.count)
+        termArray[i].push(term.word);
+      });
+
+      
+      //console.log(`-----------------------`);
+    }
+
+    for (let i = 0; i < termArray.length; i++) {
+      const concat = termArray[i].reduce((prev,curr)=>{
+        return `${prev},\"${curr}\"`;
+      },"");
+
+      console.log(concat);
+    }
+
+  }
   function getInstanceCountByIndex(index: number){
     switch (stringType_GetterFn()){
       case stringTypeOptions[0]:
@@ -465,10 +518,10 @@ export const BSky = () => {
     <>
       <header class={styles.header} style="display:flex;">
         <div style="font-size:clamp(1rem, 2.5vw, 1.5rem);font-weight:bold;display:block; align-self: center;margin-left:5px;">
-        SkeetScope
+          <span style="vertical-align: sub;" innerHTML={SVGs.BlueSkyButterfly}></span> SkeetScope
         </div>
         <div style="flex-grow: 1;display:block; align-self: center; margin-left:10px;font-size:clamp(0.75rem, 2vw, 1.1rem);">
-          the pulse of Bluesky posts
+        ➖ High frequency Bluesky terms right now.
         </div>
         <div style="margin-right:15px; align-self: center;display:flex;cursor:pointer;" onclick={displayHelp}>
           <div innerHTML={SVGs.BlueSkyHelp}></div>
@@ -483,6 +536,15 @@ export const BSky = () => {
       <main class={styles.main}>
         <div class={styles.mainHeader}>
           <div>
+            
+            
+            <Show when={stringType_GetterFn() === stringTypeOptions[0]}>
+              <label for="noiseCheck"style="margin-right: 3px;">Noise</label>
+                <input id="noiseCheck" type='checkbox' checked={!noise_GetterFn()} style="margin-right: 13px;" onChange={(e) => {
+                  noise_SetterFn(!e.currentTarget.checked);
+                }} />
+            </Show>
+
             <label for="safeCheck"style="margin-right: 3px;">Safe</label>
             <input id="safeCheck" type='checkbox' checked={safe_GetterFn()} style="margin-right: 13px;" onChange={(e) => {
               safe_SetterFn(e.currentTarget.checked);
@@ -531,6 +593,9 @@ export const BSky = () => {
             <button onclick={stopFeed} style="padding:5px;font-size:20px;">Pause</button>
           </Show>
           <button onclick={clearFeed} style="padding:5px;font-size:20px;">Clear</button>
+        </div>
+        <div style="position: absolute; right:45px;bottom:5px;">
+          <button onclick={listTerms}>boooo</button>
         </div>
         <div style="position: absolute; right:5px;bottom:5px;">
           <a href="https://github.com/voneum/s4ag.skeetscope" target="_blank" innerHTML={SVGs.GithubLogo} title='GitHub'></a>
