@@ -61,7 +61,9 @@ export class BarChartRace {
             this._pointerLocation = this._getPointerCoords(ev);
             this._getPointerWord(this._pointerLocation);
             this._pointerTerm = this._getPointerWord(this._pointerLocation);
-            
+            if (!this.IsAnimating) {
+                this.draw(1);
+            }
         }, false);
         this._canvas.addEventListener("pointerout", (ev:PointerEvent) => {
             this._canvas.style.cursor = "unset";
