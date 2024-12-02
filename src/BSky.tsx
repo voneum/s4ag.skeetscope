@@ -7,18 +7,23 @@ import styles from './BSky.module.css';
 import { JetstreamDetail } from './JetstreamDetail';
 import { TextHelper } from './TextHelper';
 import { SVGs } from './SVGs';
-import { WordBag } from './WordBag';
+import { TermBag as TermBag } from './TermBag';
 import { BarChartRace } from './BarChartRace';
 import RadioButtonArray from './RadioButtonArray';
 import { Terms } from './Terms';
+import toast, { Toaster } from 'solid-toast';
+
 
 export const BSky = () => {
 
   let elHelpDialog: HTMLDialogElement;
-  let wordBags: WordBag[] = [];
+  let wordBags: TermBag[] = [];
+  let mentionBags: TermBag[] = [];
+  let hashtagBags: TermBag[] = [];
   let barcharts:BarChartRace[] = [];
   let filterTerms:Set<string>[] = [];
-  let wordCount = 0;
+  let termCount = 0;
+  let toastId: string = "";
 
   //let elHtmlDivElements: HTMLDivElement[] = [];
 
@@ -29,7 +34,9 @@ export const BSky = () => {
   const [divElements_GetterFn, divElements_SetterFn] = createSignal<HTMLDivElement[]>([]);
   const [safe_GetterFn, safe_SetterFn] = createSignal<boolean>(true);
 
-  const [store, setStore] = createStore<number[]>([]) // A store that is an array
+  const [wordCounts_GetterFn, wordCounts_SetterFn] = createStore<number[]>([]) // A store that is an array
+  const [mentionCounts_GetterFn, mentionCounts_SetterFn] = createStore<number[]>([]) // A store that is an array
+  const [hashtagCounts_GetterFn, hashtagCounts_SetterFn] = createStore<number[]>([]) // A store that is an array
   
   const [stringType_GetterFn, stringType_SetterFn] = createSignal("Words");
   const stringTypeOptions = ["Words", "Mentions", "Hashtags"];
@@ -40,7 +47,8 @@ export const BSky = () => {
   // React to changes in selectedOption
   createEffect(() => {
     console.log("Selected option changed:", stringType_GetterFn());
-    clearFeed();
+    blankCharts();
+    //clearFeed();
   });
 
   createEffect(() => {
@@ -116,74 +124,88 @@ export const BSky = () => {
     let lower = record.Text.toLowerCase();
     let updateCharts:boolean = false;
 
-    const handles = TextHelper.ExtractBlueskyHandles(lower);
 
-    if (stringType_GetterFn() === "Mentions"){
-      for (let j = 0; j < handles.length; j++) {
-        const word = handles[j];            
-        wordCount++;
-        if (!updateCharts) updateCharts = wordCount % 2 === 0;
-        //console.log("--", wordCount,updateCharts);
-        //if (word[0] === "#" ){
-        //if (word[0] === "@"){
-        //if (word[0] === "#" || word[0] === "@"){
-        //if (word[0] !== "#" && word[0] !== "@"){
-          processWordByLength(word);
-        //}      
-      }
-    } else {
-
-      //remove any hashtags from post
-      if (handles.length > 0){
-        handles.forEach((handle) => {
-            lower = lower.replaceAll(handle,"");
-        });
-      }
-
-      const hashtags = TextHelper.ExtractHashtags(lower);
-      if (stringType_GetterFn() === "Hashtags"){
-        for (let j = 0; j < hashtags.length; j++) {
-          const word = hashtags[j];            
-          wordCount++;
-          if (!updateCharts) {
-            updateCharts = wordCount % 5 === 0;
-          }
-          //console.log("--", wordCount,updateCharts);
-          //if (word[0] === "#" ){
-          //if (word[0] === "@"){
-          //if (word[0] === "#" || word[0] === "@"){
-          //if (word[0] !== "#" && word[0] !== "@"){
-    
-              
-            processWordByLength(word);
-          //}      
-        }
-      } else {
-
-        if (hashtags.length > 0){
-          handles.forEach((hastag) => {
-              lower = lower.replaceAll(hastag,"");
-          });
-        }
-
-        const words = TextHelper.splitToAlphabeticWords(lower);   
-    
-
-        for (let j = 0; j < words.length; j++) {
-          const word = words[j];            
-          wordCount++;
-          if (!updateCharts) updateCharts = wordCount % 100 === 0;
-          //console.log("--", wordCount,updateCharts);
-          //if (word[0] === "#" ){
-          //if (word[0] === "@"){
-          //if (word[0] === "#" || word[0] === "@"){
-          if (word[0] !== "#" && word[0] !== "@"){
-            processWordByLength(word);
-          }      
-        }
-
-      }
+    //#region Urls
+    const urls = TextHelper.ExtractUrls(lower);
+    for (let j = 0; j < urls.length; j++) {
+      const url = urls[j];            
+      termCount++;
     }
+    //remove any Urls from post
+    if (urls.length > 0){
+      //console.log(urls);
+      urls.forEach((url) => {
+          lower = lower.replaceAll(url,"");
+      });
+    }
+    //#endregion  
+
+    //#region Mentions
+    const handles = TextHelper.ExtractBlueskyHandles(lower);
+    for (let j = 0; j < handles.length; j++) {
+      const word = handles[j];            
+      termCount++;
+      if (stringType_GetterFn() === stringTypeOptions[2] && !updateCharts) updateCharts = termCount % 2 === 0; 
+      //console.log("--", wordCount,updateCharts);
+      //if (word[0] === "#" ){
+      //if (word[0] === "@"){
+      //if (word[0] === "#" || word[0] === "@"){
+      //if (word[0] !== "#" && word[0] !== "@"){
+        processTermByLength(word);
+      //}      
+    }
+    //remove any handles from post
+    if (handles.length > 0){
+      handles.forEach((handle) => {
+          lower = lower.replaceAll(handle,"");
+      });
+    }
+    //#endregion  
+
+    //#region Hashtags
+    const hashtags = TextHelper.ExtractHashtags(lower);
+    
+    for (let j = 0; j < hashtags.length; j++) {
+      const word = hashtags[j];            
+      termCount++;
+      if (stringType_GetterFn() === stringTypeOptions[1] && !updateCharts) {
+        updateCharts = termCount % 5 === 0;
+      }
+      //console.log("--", wordCount,updateCharts);
+      //if (word[0] === "#" ){
+      //if (word[0] === "@"){
+      //if (word[0] === "#" || word[0] === "@"){
+      //if (word[0] !== "#" && word[0] !== "@"){
+
+          
+        processTermByLength(word);
+      //}      
+    }      
+
+    if (hashtags.length > 0){
+      handles.forEach((hastag) => {
+          lower = lower.replaceAll(hastag,"");
+      });
+    }
+    //#endregion  
+
+    //#region Words
+    const words = TextHelper.splitToAlphabeticWords(lower);     
+
+    for (let j = 0; j < words.length; j++) {
+      const word = words[j];            
+      termCount++;
+      if (stringType_GetterFn() === stringTypeOptions[0] && !updateCharts) updateCharts = termCount % 100 === 0;
+      //console.log("--", wordCount,updateCharts);
+      //if (word[0] === "#" ){
+      //if (word[0] === "@"){
+      //if (word[0] === "#" || word[0] === "@"){
+      if (word[0] !== "#" && word[0] !== "@"){
+        processTermByLength(word);
+      }      
+    }
+    //#endregion
+    
     
     if (updateCharts){
       //console.error("process", wordCount);
@@ -196,105 +218,170 @@ export const BSky = () => {
 
   });
 
-  function processWordByLength(word: string): void {
+  function processTermByLength(word: string): void {
     let wordLen = word.length;
+
     if (word.startsWith("#")){
       wordLen--;
+      const index = Math.min(wordLen - 3, 8); // Determine the appropriate index
+      if (index >= 0){
+        hashtagBags[index].AddTerm(word);
+        hashtagCounts_SetterFn(index, hashtagCounts_GetterFn[index] + 1);
+      }
+
+
     } else if (word.startsWith("@")){
       const dot = word.indexOf(".");
       wordLen = dot - 1;
-    }
+      const index = Math.min(wordLen - 3, 8); // Determine the appropriate index
+      if (index >= 0){
+        mentionBags[index].AddTerm(word);
+        mentionCounts_SetterFn(index, mentionCounts_GetterFn[index] + 1);
+      }
 
-    const index = Math.min(wordLen - 4, 8); // Determine the appropriate index
-    if (index >= 0){
-      wordBags[index].AddWord(word);
-      setStore(index, store[index] + 1);
+
+    } else {
+
+      const index = Math.min(wordLen - 3, 8); // Determine the appropriate index
+      if (index >= 0){
+        wordBags[index].AddTerm(word);
+        wordCounts_SetterFn(index, wordCounts_GetterFn[index] + 1);
+      }
     }
   }
 
 
   function processWord(index: number){
-      let topWords = wordBags[index].GetTopWords(BarChartRace.BAR_COUNT,safe_GetterFn());
+
+    let topTerms: { word: string; count: number}[] = [];
+
+    switch (stringType_GetterFn()){
+      case stringTypeOptions[0]:
+        topTerms = wordBags[index].GetTopTerms(BarChartRace.BAR_COUNT,safe_GetterFn());
+        break;
+      case stringTypeOptions[1]:
+        topTerms = mentionBags[index].GetTopTerms(BarChartRace.BAR_COUNT,safe_GetterFn());
+        break;
+      case stringTypeOptions[2]:
+        topTerms = hashtagBags[index].GetTopTerms(BarChartRace.BAR_COUNT,safe_GetterFn());
+        break;
+      default:
+        const errMsg = `The string type was not understood ${stringType_GetterFn()}`;
+        console.log(errMsg);
+        throw new Error(errMsg);
+    }
       
-      if (!barcharts[index].IsAnimating){
-        barcharts[index].UpdateWords(topWords);
-      }
+    if (!barcharts[index].IsAnimating){
+      barcharts[index].UpdateWords(topTerms);
+    }
 
   }
 
   onMount(() => {
     //const div: HTMLDivElement = document.createElement("div");
 
+    let divs: HTMLDivElement[] = [];
+    barcharts = [];
+    filterTerms = [];
+    wordBags = [];
+    mentionBags = [];
+    hashtagBags = [];
+    for (let i = 0; i < 9; i++) {
+      divs.push(document.createElement("div"));
+      divs[i].classList.add(styles.divChartContainer);
+      const title:string = i < 8 ? `${i+3} letters` : `>${i+2} letters`;
+      barcharts.push(new BarChartRace(title, divs[i]));
+      filterTerms.push(Terms.AdultHashtagsByLength(i+3));
+      wordBags.push(new TermBag(filterTerms[i]));
+      mentionBags.push(new TermBag(filterTerms[i]));
+      hashtagBags.push(new TermBag(filterTerms[i]));
+    }
+    divElements_SetterFn(divs);
 
-    divElements_SetterFn([
-      document.createElement("div"),
-      document.createElement("div"),
-      document.createElement("div"),
-      document.createElement("div"),
-      document.createElement("div"),
-      document.createElement("div"),
-      document.createElement("div"),
-      document.createElement("div"),
-      document.createElement("div"),
-    ]);
+    // divElements_SetterFn([
+    //   document.createElement("div"),
+    //   document.createElement("div"),
+    //   document.createElement("div"),
+    //   document.createElement("div"),
+    //   document.createElement("div"),
+    //   document.createElement("div"),
+    //   document.createElement("div"),
+    //   document.createElement("div"),
+    //   document.createElement("div"),
+    // ]);
 
-    divElements_GetterFn()[0].classList.add(styles.divChartContainer);
-    divElements_GetterFn()[1].classList.add(styles.divChartContainer);
-    divElements_GetterFn()[2].classList.add(styles.divChartContainer);
-    divElements_GetterFn()[3].classList.add(styles.divChartContainer);
-    divElements_GetterFn()[4].classList.add(styles.divChartContainer);
-    divElements_GetterFn()[5].classList.add(styles.divChartContainer);
-    divElements_GetterFn()[6].classList.add(styles.divChartContainer);
-    divElements_GetterFn()[7].classList.add(styles.divChartContainer);
-    divElements_GetterFn()[8].classList.add(styles.divChartContainer);
+    // divElements_GetterFn()[0].classList.add(styles.divChartContainer);
+    // divElements_GetterFn()[1].classList.add(styles.divChartContainer);
+    // divElements_GetterFn()[2].classList.add(styles.divChartContainer);
+    // divElements_GetterFn()[3].classList.add(styles.divChartContainer);
+    // divElements_GetterFn()[4].classList.add(styles.divChartContainer);
+    // divElements_GetterFn()[5].classList.add(styles.divChartContainer);
+    // divElements_GetterFn()[6].classList.add(styles.divChartContainer);
+    // divElements_GetterFn()[7].classList.add(styles.divChartContainer);
+    // divElements_GetterFn()[8].classList.add(styles.divChartContainer);
 
-    barcharts = [
-      new BarChartRace("4 letters", divElements_GetterFn()[0]),
-      new BarChartRace("5 letters", divElements_GetterFn()[1]),
-      new BarChartRace("6 letters", divElements_GetterFn()[2]),
-      new BarChartRace("7 letters", divElements_GetterFn()[3]),
-      new BarChartRace("8 letters", divElements_GetterFn()[4]),
-      new BarChartRace("9 letters", divElements_GetterFn()[5]),
-      new BarChartRace("10 letters", divElements_GetterFn()[6]),
-      new BarChartRace("11 letters", divElements_GetterFn()[7]),
-      new BarChartRace(">11 letters", divElements_GetterFn()[8]),
-    ];
+    // barcharts = [
+    //   new BarChartRace("4 letters", divElements_GetterFn()[0]),
+    //   new BarChartRace("5 letters", divElements_GetterFn()[1]),
+    //   new BarChartRace("6 letters", divElements_GetterFn()[2]),
+    //   new BarChartRace("7 letters", divElements_GetterFn()[3]),
+    //   new BarChartRace("8 letters", divElements_GetterFn()[4]),
+    //   new BarChartRace("9 letters", divElements_GetterFn()[5]),
+    //   new BarChartRace("10 letters", divElements_GetterFn()[6]),
+    //   new BarChartRace("11 letters", divElements_GetterFn()[7]),
+    //   new BarChartRace(">11 letters", divElements_GetterFn()[8]),
+    // ];
 
 
-    filterTerms = [
-      Terms.AdultHashtagsByLength(4),
-      Terms.AdultHashtagsByLength(5),
-      Terms.AdultHashtagsByLength(6),
-      Terms.AdultHashtagsByLength(7),
-      Terms.AdultHashtagsByLength(8),
-      Terms.AdultHashtagsByLength(9),
-      Terms.AdultHashtagsByLength(10),
-      Terms.AdultHashtagsByLength(11),
-      Terms.AdultHashtagsByLengthGreaterThan(11),
-    ];
+    // filterTerms = [
+    //   Terms.AdultHashtagsByLength(4),
+    //   Terms.AdultHashtagsByLength(5),
+    //   Terms.AdultHashtagsByLength(6),
+    //   Terms.AdultHashtagsByLength(7),
+    //   Terms.AdultHashtagsByLength(8),
+    //   Terms.AdultHashtagsByLength(9),
+    //   Terms.AdultHashtagsByLength(10),
+    //   Terms.AdultHashtagsByLength(11),
+    //   Terms.AdultHashtagsByLengthGreaterThan(11),
+    // ];
 
-    wordBags = [
-      new WordBag(filterTerms[0]),
-      new WordBag(filterTerms[1]),
-      new WordBag(filterTerms[2]),
-      new WordBag(filterTerms[3]),
-      new WordBag(filterTerms[4]),
-      new WordBag(filterTerms[5]),
-      new WordBag(filterTerms[6]),
-      new WordBag(filterTerms[7]),
-      new WordBag(filterTerms[8]),
-    ];
+    // wordBags = [
+    //   new TermBag(filterTerms[0]),
+    //   new TermBag(filterTerms[1]),
+    //   new TermBag(filterTerms[2]),
+    //   new TermBag(filterTerms[3]),
+    //   new TermBag(filterTerms[4]),
+    //   new TermBag(filterTerms[5]),
+    //   new TermBag(filterTerms[6]),
+    //   new TermBag(filterTerms[7]),
+    //   new TermBag(filterTerms[8]),
+    // ];
 
     //update the word counts
-    setStore([0,0,0,0,0,0,0,0,0]);
+    wordCounts_SetterFn([0,0,0,0,0,0,0,0,0]);
+    mentionCounts_SetterFn([0,0,0,0,0,0,0,0,0]);
+    hashtagCounts_SetterFn([0,0,0,0,0,0,0,0,0]);
 
     // Start listening to events.
     jetstream.onStart(() => {
+      toastId = toast.loading('Waiting for BSky...', { position: "bottom-right", duration: 100000});
+    });
+    jetstream.onOpen(() => {
       socketOpen_SetterFn(true);
+      toast.remove(toastId);
+      toast.success("BSky feed started.");
     });
     jetstream.onClose(() => {
       socketOpen_SetterFn(false);
+      toast.remove(toastId);
+      toast("BSky feed closed.");
+    });    
+    jetstream.onError((err:string) => {
+      socketOpen_SetterFn(false);
+      toast.remove(toastId);
+      toast.error(err);
     });
+
     jetstream.start();
 
   })
@@ -318,30 +405,60 @@ export const BSky = () => {
     dataReceived_SetterFn(0);
     
     
-    wordBags = [
-      new WordBag(filterTerms[0]),
-      new WordBag(filterTerms[1]),
-      new WordBag(filterTerms[2]),
-      new WordBag(filterTerms[3]),
-      new WordBag(filterTerms[4]),
-      new WordBag(filterTerms[5]),
-      new WordBag(filterTerms[6]),
-      new WordBag(filterTerms[7]),
-      new WordBag(filterTerms[8]),
-    ];
+    wordBags.length = 0;
+    mentionBags.length = 0;
+    hashtagBags.length = 0;
+    for (let i = 0; i < 9; i++) {
+      wordBags.push(new TermBag(filterTerms[i]));
+      mentionBags.push(new TermBag(filterTerms[i]));
+      hashtagBags.push(new TermBag(filterTerms[i]));      
+    }
+    // wordBags = [
+    //   new TermBag(filterTerms[0]),
+    //   new TermBag(filterTerms[1]),
+    //   new TermBag(filterTerms[2]),
+    //   new TermBag(filterTerms[3]),
+    //   new TermBag(filterTerms[4]),
+    //   new TermBag(filterTerms[5]),
+    //   new TermBag(filterTerms[6]),
+    //   new TermBag(filterTerms[7]),
+    //   new TermBag(filterTerms[8]),
+    // ];
 
     //update the word counts
-    setStore([0,0,0,0,0,0,0,0,0]);
+    wordCounts_SetterFn([0,0,0,0,0,0,0,0,0]);
+    mentionCounts_SetterFn([0,0,0,0,0,0,0,0,0]);
+    hashtagCounts_SetterFn([0,0,0,0,0,0,0,0,0]);
 
-    wordCount = 0;
+    termCount = 0;
+    blankCharts();
+    
+  }
+  function blankCharts(){
     barcharts.forEach((barchart) =>{
       barchart.Clear();
     });
-    
   }
+
   function displayHelp(){
     elHelpDialog.showModal();
 
+  }
+
+  function getInstanceCountByIndex(index: number){
+    switch (stringType_GetterFn()){
+      case stringTypeOptions[0]:
+        return wordCounts_GetterFn[index]; 
+      case stringTypeOptions[1]:
+        return mentionCounts_GetterFn[index]; 
+      case stringTypeOptions[2]:
+        return hashtagCounts_GetterFn[index]; 
+      default:
+        const errMsg = `The string type was not understood ${stringType_GetterFn()}`;
+        console.log(errMsg);
+        throw new Error(errMsg);
+    }
+    
   }
   
   return (
@@ -395,7 +512,7 @@ export const BSky = () => {
               <div class={`${styles.divChartCard}`}>
                 <div class={`${styles.divChartCardHeader} ${styles.divChartCardChild}`}>
                   <div class={styles.child1}>{ barcharts[index()].Name }</div>
-                  <div title="Total word count" class={styles.child2}>total:{store[index()]}</div>
+                  <div title="Total word count" class={styles.child2}>total:{getInstanceCountByIndex(index())}</div>
                 </div>
                 <div class={styles.divChartCardContent}>
                   { item }
@@ -468,6 +585,12 @@ export const BSky = () => {
           </div>
         
       </dialog>
+
+      <Toaster 
+        position="bottom-right"
+        gutter={8}
+      />
+
     </>
   );
 };

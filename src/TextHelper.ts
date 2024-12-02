@@ -166,7 +166,35 @@ export class TextHelper {
         return hashtags;
     };
 
+    /**
+     * Extracts all unique web URLs starting with "http://" or "https://" from a given text.
+     * 
+     * @param text - The input string of arbitrary length from which to extract URLs.
+     * @returns An array of unique web URLs found in the input string. Returns an empty array if the input string is too short or no URLs are found.
+     */
+    public static ExtractUrls = (text: string): string[] => {
+        // Return early if the input string is shorter than the shortest possible URL (7 characters for "http://").
+        if (text.length < 7) {
+            return [];
+        }
 
+        // Regular expression to match URLs starting with 'http://' or 'https://'.
+        const urlRegex = /(https?:\/\/[^\s]+)/g;
+
+        // Match all URLs in the input text using the regular expression.
+        const matches = text.match(urlRegex);
+
+        // If no URLs are found, return an empty array.
+        if (!matches) {
+            return [];
+        }
+
+        // Use a Set to ensure uniqueness of URLs.
+        const uniqueUrls = new Set(matches);
+
+        // Convert the Set to an array and return it.
+        return Array.from(uniqueUrls);
+    };
 
     
 }

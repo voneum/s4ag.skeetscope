@@ -1,6 +1,8 @@
 import { BSkyApi_PostResponse } from "./BSkyApi_PostResponse";
 import { JetstreamDetail } from "./JetstreamDetail";
 
+export enum JetstreamStatus {open, closed, error };
+
 /**
  * A class to interact with the Bluesky Feed API via WebSocket.
  * Allows subscribing to specific collections and handling "create", "update", and "delete" events.
@@ -11,8 +13,10 @@ export class Jetstream {
     private _dataRecievedLength = 0;
     private _messagesRecieved = 0;    
     private _onStartCallback!: () => void;
+    private _onOpenCallback!: () => void;
     private _onCloseCallback!: () => void;
-
+    private _onErrorCallback!: (err:string) => void;
+    
     /**
      * The WebSocket endpoint for the Bluesky Feed API.
      * Defaults to the public endpoint if not provided.
@@ -44,7 +48,8 @@ export class Jetstream {
         ];
     
         this._endpoint = options.endpoint ?? endpoints[Math.floor(Math.random() * endpoints.length)];
-    
+        console.log("Endpoint:", this._endpoint);
+
         // Prepopulate emitters map with the provided wantedCollections
         if (options.wantedCollections) {
         for (const collection of options.wantedCollections) {
@@ -114,8 +119,14 @@ export class Jetstream {
     public onStart(callback: () => void): void {
         this._onStartCallback = callback;
     }
+    public onOpen(callback: () => void): void {
+        this._onOpenCallback = callback;
+    }
     public onClose(callback: () => void): void {
         this._onCloseCallback = callback;
+    }
+    public onError(callback: (err:string) => void): void {
+        this._onErrorCallback = callback;
     }
     
     /**
@@ -162,16 +173,19 @@ export class Jetstream {
 
         this._ws.onopen= (ev: Event) => {
             console.log("WebSocket opened:", ev);
+            this._onOpenCallback();
         };
 
         // Log WebSocket errors.
         this._ws.onerror = (error) => {
             console.error("WebSocket error:", error);
+            this._onErrorCallback(`"WebSocket error: ${JSON.stringify(error)}`);
         };
 
         // Log WebSocket connection closure.
         this._ws.onclose = () => {
             console.warn("WebSocket connection closed.");
+            this._onCloseCallback();
         };
 
         this._onStartCallback();
@@ -185,7 +199,7 @@ export class Jetstream {
             this._ws.close();
             this._ws = undefined;
             console.info("WebSocket connection stopped.");
-            this._onCloseCallback();
+            //this._onCloseCallback();
         }
     }
 

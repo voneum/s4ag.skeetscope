@@ -66,7 +66,7 @@ export class BarChartRace {
             });
             const activeBar = this._activeBars[barIndex];
             //console.log(index, activeBar.Word);
-            if (activeBar.Word.length > 0){
+            if (activeBar.Word && activeBar.Word.length > 0){
                 if (activeBar.Word[0] === "#" && activeBar.Word.length > 1){
                     const hashTag = activeBar.Word.slice(1);
                     window.open(`https://bsky.app/hashtag/${hashTag}`, '_blank')?.focus();
@@ -142,6 +142,7 @@ export class BarChartRace {
         this._wordColors.clear();
     }
 
+    
     /**
      * Updates the words and their counts displayed on the chart, and restarts the animation if necessary.
      * @param words An array of objects containing words and their corresponding counts
