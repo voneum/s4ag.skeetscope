@@ -52,43 +52,42 @@ export class TextHelper {
             const char = text[i];
     
             if (char === "@") {
-                // Start a potential handle
-                if (!isHandle) {
-                    isHandle = true;
-                    currentHandle = char; // Include the '@' in the handle
-                } else {
-                    // Already inside a handle; reset if another '@' is encountered
-                    if (currentHandle.length > 1) {
+                // Start a potential handle only if it's preceded by whitespace or the start of the string
+                if (i === 0 || /\s/.test(text[i - 1])) {
+                    if (isHandle && currentHandle.length > 1) {
                         handles.push(currentHandle);
                     }
-                    currentHandle = "@";
+                    isHandle = true;
+                    currentHandle = char; // Start a new handle
+                } else {
+                    // Not a valid handle start
+                    isHandle = false;
+                    currentHandle = "";
                 }
             } else if (isHandle) {
-
-                // Do not allow a dot or hyphen immediately after '@'
                 if (currentHandle.length === 1 && (char === "." || char === "-")) {
-                    isHandle = false;  // Invalid handle; reset
+                    // Invalid handle start, reset
+                    isHandle = false;
                     currentHandle = "";
                     continue;
                 }
-                
-                // Validate characters for domain names
+    
                 if (
-                    (char >= "a" && char <= "z") || // Lowercase letters
-                    (char >= "A" && char <= "Z") || // Uppercase letters
-                    (char >= "0" && char <= "9") || // Numbers
-                    char === "." ||                 // Dot for domains
-                    char === "-"                    // Hyphen in domain names
+                    (char >= "a" && char <= "z") ||
+                    (char >= "A" && char <= "Z") ||
+                    (char >= "0" && char <= "9") ||
+                    char === "." ||
+                    char === "-"
                 ) {
                     currentHandle += char;
                 } else {
-                    // End of a handle; validate before adding
+                    // End of handle; validate before adding
                     if (
                         currentHandle.length > 1 &&
                         currentHandle.match(/[a-zA-Z0-9]/) &&
                         !currentHandle.endsWith(".") &&
                         !currentHandle.endsWith("-") &&
-                        currentHandle.includes(".") // Ensure at least one period is present
+                        currentHandle.includes(".")
                     ) {
                         handles.push(currentHandle);
                     }
@@ -98,19 +97,20 @@ export class TextHelper {
             }
         }
     
-        // Add the last handle if it exists and is valid
+        // Add the last handle if valid
         if (
             currentHandle.length > 1 &&
             currentHandle.match(/[a-zA-Z0-9]/) &&
             !currentHandle.endsWith(".") &&
             !currentHandle.endsWith("-") &&
-            currentHandle.includes(".") // Ensure at least one period is present
+            currentHandle.includes(".")
         ) {
             handles.push(currentHandle);
         }
     
         return handles;
     };
+    
 
     /**
      * Extracts hashtags from a given text string.
