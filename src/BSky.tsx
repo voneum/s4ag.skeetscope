@@ -483,10 +483,10 @@ export const BSky = () => {
       <main class={styles.main}>
         <div class={styles.mainHeader}>
           <div>
-            <input id="safeCheck" type='checkbox' checked={safe_GetterFn()} style="margin-right: 3px;" onChange={(e) => {
+            <label for="safeCheck"style="margin-right: 3px;">Safe</label>
+            <input id="safeCheck" type='checkbox' checked={safe_GetterFn()} style="margin-right: 13px;" onChange={(e) => {
               safe_SetterFn(e.currentTarget.checked);
             }} />
-            <label for="safeCheck"style="margin-right: 10px;">Safe</label>
 
             Bars:
             <select style="margin-left: 3px;"

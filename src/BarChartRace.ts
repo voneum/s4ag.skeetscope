@@ -11,6 +11,8 @@ export class BarChartRace {
     private _ctx: CanvasRenderingContext2D; // The 2D drawing context for the canvas
     private _activeBars: BarChartBar[] = []; // Array of active bars in the chart
     private _name: string = "";
+    private _pointerLocation: number[] | null = null;
+    private _pointerTerm: string = "";
 
     private _wordColors: Map<string, string> = new Map(); // Maps words to their assigned colors
     //private _maxCount: number = 0; // Maximum count for the words (used to scale bars)
@@ -22,6 +24,8 @@ export class BarChartRace {
     private static DEFAULT_PADDING = 5; // Padding around each bar
     private static DEFAULT_LABEL_GUTTER = 50; // Padding between the bar and label
     private static DEFAULT_ANIMATION_DURATION = 1500; // Duration for each animation cycle in milliseconds
+
+
 
     private _resizeObserver = new ResizeObserver((entries) => {
         this.updateCanvasSize();
@@ -49,41 +53,63 @@ export class BarChartRace {
 
         this._canvas.addEventListener("pointerover", (ev:PointerEvent) => {
             this._canvas.style.cursor = "pointer";
+            this._pointerLocation = this._getPointerCoords(ev);
+            this._pointerTerm = this._getPointerWord(this._pointerLocation);
         }, false);
         this._canvas.addEventListener("pointermove", (ev:PointerEvent) => {
             this._canvas.style.cursor = "pointer";
+            this._pointerLocation = this._getPointerCoords(ev);
+            this._getPointerWord(this._pointerLocation);
+            this._pointerTerm = this._getPointerWord(this._pointerLocation);
+            
         }, false);
         this._canvas.addEventListener("pointerout", (ev:PointerEvent) => {
             this._canvas.style.cursor = "unset";
+            this._pointerLocation = null;
+            this._pointerTerm = "";
         }, false);
         this._canvas.addEventListener("pointerdown", (ev:PointerEvent) => {
-            const rect = this._canvas.getBoundingClientRect();
-            //console.log(ev.clientX - rect.left, ev.clientY - rect.top);
-            const index = Math.max(0,Math.floor(10 * (ev.clientY - rect.top) / (30 * BarChartRace.BAR_COUNT))) + 1;
-            //console.log(index, this._activeBars.length);
+            // this._pointerLocation = this._getPointerCoords(ev);
+            // this._pointerTerm = this._getPointerWord(this._pointerLocation);
+            
+            if (this._pointerTerm.length > 0) {
+                if (this._pointerTerm[0] === "#" && this._pointerTerm.length > 1){
+                    const hashTag = this._pointerTerm.slice(1);
+                    window.open(`https://bsky.app/hashtag/${hashTag}`, '_blank')?.focus();
+                } else if (this._pointerTerm[0] === "@" && this._pointerTerm.length > 1){
+                    const user = this._pointerTerm.slice(1);
+                    window.open(`https://bsky.app/profile/${user}`, '_blank')?.focus();
+                } else {
+                    window.open(`https://bsky.app/search?q=${this._pointerTerm}`, '_blank')?.focus();
+                }
+            };
+        });
+    }
+
+    private _getPointerCoords = (ev:PointerEvent): number[] => {
+        const rect = this._canvas.getBoundingClientRect();
+        return [ev.clientX - rect.left, ev.clientY - rect.top];
+    }
+    private _getPointerWord = (pointerLocation: number[] | null): string => {
+
+        if (pointerLocation){
+            const index = Math.max(0,Math.floor(BarChartRace.BAR_COUNT * (pointerLocation[1]) / (30 * BarChartRace.BAR_COUNT))) + 1;
+                //console.log(index, this._activeBars.length);
             const barIndex = this._activeBars.findIndex((b)=>{ 
                 return b.Rank === index;
             });
             const activeBar = this._activeBars[barIndex];
-            //console.log(index, activeBar.Word);
-            if (activeBar.Word && activeBar.Word.length > 0){
-                if (activeBar.Word[0] === "#" && activeBar.Word.length > 1){
-                    const hashTag = activeBar.Word.slice(1);
-                    window.open(`https://bsky.app/hashtag/${hashTag}`, '_blank')?.focus();
-                } else if (activeBar.Word[0] === "@" && activeBar.Word.length > 1){
-                    const user = activeBar.Word.slice(1);
-                    window.open(`https://bsky.app/profile/${user}`, '_blank')?.focus();
-                } else {
-                    window.open(`https://bsky.app/search?q=${activeBar.Word}`, '_blank')?.focus();
-                }
-                
+            if (activeBar) {           
+                //console.log(index, activeBar.Word);
+                return activeBar.Word;
+            } else {
+                return "";
             }
-        }, false);
-
-
-        
-
+        } else {
+            return "";
+        }
     }
+
 
     /**
      * Gets the chart name.
@@ -193,6 +219,39 @@ export class BarChartRace {
         this._activeBars.forEach((entry, index) => {
             entry.UpdateRender(progress, this._currentMaxWordCount);
         });
+
+        this._drawTooltip();
+        
+    }
+    private _drawTooltip(){
+        if (this._pointerLocation){
+
+            const loc = this._pointerLocation;
+            // // Start a new Path
+            // this._ctx.beginPath();
+            // this._ctx.moveTo(0, loc[1]);
+            // this._ctx.lineTo(this._canvas.width, loc[1]);
+
+            // // Draw the Path
+            // this._ctx.lineWidth = 2;
+            // this._ctx.strokeStyle = "red";
+
+            // this._ctx.stroke();
+
+            if (this._pointerTerm.length > 0){
+                this._ctx.save();
+
+                this._ctx.shadowColor = "white";
+                this._ctx.shadowOffsetX = 1;
+                this._ctx.shadowOffsetY = 1;
+
+
+                this._ctx.font = "bold 16px Arial";
+                this._ctx.fillText(this._pointerTerm,loc[0] + 5,loc[1] - 5);
+                
+                this._ctx.restore(); 
+            }
+        }
     }
 
     /**

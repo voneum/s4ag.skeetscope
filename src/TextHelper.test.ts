@@ -109,6 +109,11 @@ describe("TextHelper.ExtractBlueskyHandles", () => {
         expect(result).toEqual([]);
     });
 
+
+    it("should handle email addresses", () => {
+        const result = TextHelper.ExtractBlueskyHandles("hi@gmail.com bob@gmail.com");
+        expect(result).toEqual([]);
+    });
     // it("should ignore invalid handles starting with numbers or unsupported symbols", () => {
     //     const text = "@123.start.with.number @#symbol-start";
     //     const result = TextHelper.ExtractBlueskyHandles(text);
