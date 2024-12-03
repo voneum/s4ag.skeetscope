@@ -179,4 +179,229 @@ describe('ExtractHashtags', () => {
     });
 });
 
+describe('TextHelper.ExtractUrls', () => {
+    it('should return an empty array when the input is empty', () => {
+        const result = TextHelper.ExtractUrls('');
+        expect(result).toEqual([]);
+    });
+
+    it('should return an empty array when the input has no URLs', () => {
+        const result = TextHelper.ExtractUrls('This is a test string without URLs.');
+        expect(result).toEqual([]);
+    });
+
+    it('should extract URLs starting with "http://"', () => {
+        const text = 'Visit http://example.com for more information.';
+        const result = TextHelper.ExtractUrls(text);
+        expect(result).toEqual(['http://example.com']);
+    });
+
+    it('should extract URLs starting with "https://"', () => {
+        const text = 'Secure site: https://secure-site.com';
+        const result = TextHelper.ExtractUrls(text);
+        expect(result).toEqual(['https://secure-site.com']);
+    });
+
+    it('should extract URLs starting with "www."', () => {
+        const text = 'Check out www.example.com for great deals.';
+        const result = TextHelper.ExtractUrls(text);
+        expect(result).toEqual(['www.example.com']);
+    });
+
+    it('should extract multiple unique URLs from the text', () => {
+        const text = 'Visit http://example.com and also check https://secure-site.com or www.anotherexample.com.';
+        const result = TextHelper.ExtractUrls(text);
+        expect(result).toEqual([
+            'http://example.com',
+            'https://secure-site.com',
+            'www.anotherexample.com'
+        ]);
+    });
+
+    it('should handle duplicate URLs by returning only unique entries', () => {
+        const text = 'http://example.com is the same as http://example.com';
+        const result = TextHelper.ExtractUrls(text);
+        expect(result).toEqual(['http://example.com']);
+    });
+
+    it('should handle text with URLs that have no sub domaims', () => {
+        const text = 'Check http://example.com and www.example.com, and also example.com without www.';
+        const result = TextHelper.ExtractUrls(text);
+        expect(result).toEqual(['http://example.com', 'www.example.com', 'example.com']);
+    });
+
+    it('should ignore URLs that are cut off or malformed', () => {
+        const text = 'Check http://example is not ok but the next is because it could be at the end of a sentence: www.example.';
+        const result = TextHelper.ExtractUrls(text);
+        expect(result).toEqual(['www.example']);
+    });
+    it('should deal with trailing punctuation', () => {
+        const text = 'Visit http://example.com/path.sss, or http://example.com/path.ttt.';
+        const result = TextHelper.ExtractUrls(text);
+        expect(result).toEqual(["http://example.com/path.sss", "http://example.com/path.ttt"]);
+    });
+    
+    it('should exclude trailing punctuation if followed by whitespace', () => {
+        const text = 'Visit http://example.com/path. Here is another link.';
+        const result = TextHelper.ExtractUrls(text);
+        expect(result).toEqual(['http://example.com/path']);
+    });
+    
+    it('should exclude trailing punctuation if followed by a comma', () => {
+        const text = 'Visit http://example.com/path, and then check www.site.com.';
+        const result = TextHelper.ExtractUrls(text);
+        expect(result).toEqual(['http://example.com/path', 'www.site.com']);
+    });
+    
+    it('should handle markers', () => {
+        const text = 'Visit http://example.com/path#somehwere, and then check www.site.com.';
+        const result = TextHelper.ExtractUrls(text);
+        expect(result).toEqual(['http://example.com/path#somehwere', 'www.site.com']);
+    });
+    
+    it('should handle querystrings', () => {
+        const text = 'Visit http://example.com/path/index.aspx?vsr=3 and then check www.site.com?vsr=3.';
+        const result = TextHelper.ExtractUrls(text);
+        expect(result).toEqual(['http://example.com/path/index.aspx?vsr=3', 'www.site.com?vsr=3']);
+    });
+
+    
+    // Test: Input string too short
+    it('should return an empty array for a string that is too short', () => {
+        const text = 'ab';
+        const result = TextHelper.ExtractUrls(text);
+        expect(result).toEqual([]); // Should return an empty array since the string is too short for any URL
+    });
+
+    // Test: Missing URL components (e.g., missing "://")
+    it('should detect a string as a URL when missing "://"', () => {
+        const text = 'www.example.com';
+        const result = TextHelper.ExtractUrls(text);
+        expect(result).toEqual(['www.example.com']); // Should not be detected as a valid URL without "http://" or "https://"
+    });
+
+    // Test: Invalid URL (just a partial domain without protocol)
+    it('should not detect an incomplete URL with invalid domain format', () => {
+        const text = 'Visit example at www,example,com today!';
+        const result = TextHelper.ExtractUrls(text);
+        expect(result).toEqual([]); // Invalid URL, contains commas
+    });
+
+    // Test: URLs with untrimmed special characters
+    it('should detect a URL when it has untrimmed special characters at the end', () => {
+        const text = 'Check this out: http://example.com/hello#world!';
+        const result = TextHelper.ExtractUrls(text);
+        expect(result).toEqual(['http://example.com/hello#world!']); 
+    });
+
+    // Test: Non-URL strings
+    it('should return an empty array for a string without any URLs', () => {
+        const text = 'This is just a regular string without a URL!';
+        const result = TextHelper.ExtractUrls(text);
+        expect(result).toEqual([]); // No URLs in this text, so it should return an empty array
+    });
+
+    // Test: Multiple invalid URLs in a string
+    it('should return an empty array for strings with multiple invalid URLs', () => {
+        const text = 'Here are some URLs: xyz://invalid, http://, ftp://nope.com, xyz://nope.com';
+        const result = TextHelper.ExtractUrls(text);
+        expect(result).toEqual([]); // The "xyz://", "http://", and "ftp://" are not valid URLs, so no URLs are returned
+    });
+
+    // Test: Malformed URL with multiple "@" symbols
+    it('should not detect a malformed URL with multiple "@" symbols', () => {
+        const text = 'Visit this URL: http://example@com:8080 or this one: http://user@example.com:8080';
+        const result = TextHelper.ExtractUrls(text);
+        expect(result).toEqual(["http://user@example.com:8080"]); // This should not be detected as a valid URL due to the misplaced "@" symbol
+    });
+
+    // Test: Valid URL followed by invalid content
+    it('should return the correct URL even when invalid content follows', () => {
+        const text = 'Check out this website: http://example.com/path/to/resource something else';
+        const result = TextHelper.ExtractUrls(text);
+        expect(result).toEqual(['http://example.com/path/to/resource']); // Should extract the URL but ignore the invalid content after
+    });
+
+    // Test: URLs with trailing spaces or characters
+    it('should correctly trim trailing spaces and characters from URLs', () => {
+        const text = 'The website is: https://example.com/ ';
+        const result = TextHelper.ExtractUrls(text);
+        expect(result).toEqual(['https://example.com']); // Should handle the space at the end of the URL correctly
+    });
+
+    // Test: URLs embedded in text with punctuation
+    it('should detect a URL even when it is embedded in punctuation-heavy text', () => {
+        const text = 'Contact us at: hello! @example.com, http://www.example.com';
+        const result = TextHelper.ExtractUrls(text);
+        expect(result).toEqual(['http://www.example.com']); // Should correctly detect the second URL, ignoring embedded punctuation
+    });
+    
+});
+
+describe('TextHelper.TrimChars', () => {
+    it('should trim characters from both ends', () => {
+      const input = "!!Hello World!!";
+      const chars = ['!', ' '];
+      const result = TextHelper.TrimChars(input, chars);
+      expect(result).toBe("Hello World");
+    });
+  
+    it('should not modify the string if no characters are to be trimmed', () => {
+      const input = "Hello World";
+      const chars = ['!', ' '];
+      const result = TextHelper.TrimChars(input, chars);
+      expect(result).toBe("Hello World");
+    });
+  
+    it('should trim characters from the beginning', () => {
+      const input = "   Hello World";
+      const chars = [' '];
+      const result = TextHelper.TrimChars(input, chars);
+      expect(result).toBe("Hello World");
+    });
+  
+    it('should trim characters from the end', () => {
+      const input = "Hello World   ";
+      const chars = [' '];
+      const result = TextHelper.TrimChars(input, chars);
+      expect(result).toBe("Hello World");
+    });
+  
+    it('should handle trimming when the string consists entirely of characters to remove', () => {
+      const input = "!#!#!!@#";
+      const chars = ['!','/','#','@'];
+      const result = TextHelper.TrimChars(input, chars);
+      expect(result).toBe("");
+    });
+  
+    it('should handle trimming when the string consists of multiple chars at both ends', () => {
+      const input = "!#!#sh!t!@#";
+      const chars = ['!','/','#','@'];
+      const result = TextHelper.TrimChars(input, chars);
+      expect(result).toBe("sh!t");
+    });
+  
+    it('should return an empty string if the input is entirely made of characters to remove', () => {
+      const input = "   ";
+      const chars = [' '];
+      const result = TextHelper.TrimChars(input, chars);
+      expect(result).toBe("");
+    });
+  
+    it('should handle empty input string', () => {
+      const input = "";
+      const chars = [' ', '!'];
+      const result = TextHelper.TrimChars(input, chars);
+      expect(result).toBe("");
+    });
+  
+    it('should handle cases with no characters to trim', () => {
+      const input = "Just a test!";
+      const chars:string[] = [];
+      const result = TextHelper.TrimChars(input, chars);
+      expect(result).toBe("Just a test!");
+    });
+  });
+
+
 

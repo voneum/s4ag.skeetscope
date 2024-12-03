@@ -274,15 +274,15 @@ export const BSky = () => {
     switch (stringType_GetterFn()){
       case stringTypeOptions[0]:
         if (!wordBags || wordBags.length === 0) return;
-        topTerms = wordBags[index].GetTopTerms(BarChartRace.BAR_COUNT,noise_GetterFn());
+        topTerms = wordBags[index].GetTopTerms(BarChartRace.BAR_COUNT,noise_GetterFn(),safe_GetterFn());
         break;
       case stringTypeOptions[1]:
         if (!mentionBags || mentionBags.length === 0) return;
-        topTerms = mentionBags[index].GetTopTerms(BarChartRace.BAR_COUNT,safe_GetterFn());
+        topTerms = mentionBags[index].GetTopTerms(BarChartRace.BAR_COUNT,safe_GetterFn(),safe_GetterFn());
         break;
       case stringTypeOptions[2]:
         if (!hashtagBags || hashtagBags.length === 0) return;
-        topTerms = hashtagBags[index].GetTopTerms(BarChartRace.BAR_COUNT,safe_GetterFn());
+        topTerms = hashtagBags[index].GetTopTerms(BarChartRace.BAR_COUNT,safe_GetterFn(),safe_GetterFn());
         break;
       default:
         const errMsg = `The string type was not understood ${stringType_GetterFn()}`;
@@ -311,8 +311,17 @@ export const BSky = () => {
       divs[i].classList.add(styles.divChartContainer);
       const title:string = i < 8 ? `${i+3} letters` : `>${i+2} letters`;
       barcharts.push(new BarChartRace(title, divs[i]));
-      filterTerms.push(Terms.AdultHashtagsByLength(i+3));
-      noiseTerms.push(Terms.TermsByLength(Terms.NoiseTerms(), i+3))
+
+      if (i < 8){
+        filterTerms.push(Terms.AdultHashtagsByLength(i+3));
+      } else {
+        filterTerms.push(Terms.AdultHashtagsByLengthGreaterThan(i+3-1));
+      }
+      if (i < 8){
+        noiseTerms.push(Terms.TermsByLength(Terms.NoiseTerms(), i+3))
+      } else {
+        noiseTerms.push(Terms.TermsByLengthGreaterThan(Terms.NoiseTerms(),i+3-1));
+      }
       wordBags.push(new TermBag(noiseTerms[i]));
       mentionBags.push(new TermBag(filterTerms[i]));
       hashtagBags.push(new TermBag(filterTerms[i]));
@@ -475,7 +484,7 @@ export const BSky = () => {
       termArray.push([]);
 
       const terms = wordBags[i];      
-      const allTerms = terms.GetTopTerms(terms.GetDistinctWordCount());
+      const allTerms = terms.GetTopTerms(terms.GetDistinctWordCount(), false);
 
       
       //console.log(`== ${allTerms[i]} ==================`);

@@ -172,7 +172,7 @@ export class TextHelper {
      * @param text - The input string of arbitrary length from which to extract URLs.
      * @returns An array of unique web URLs found in the input string. Returns an empty array if the input string is too short or no URLs are found.
      */
-    public static ExtractUrls = (text: string): string[] => {
+    public static ExtractUrlsWithRegex = (text: string): string[] => {
         // Return early if the input string is shorter than the shortest possible URL (7 characters for "http://").
         if (text.length < 7) {
             return [];
@@ -197,4 +197,180 @@ export class TextHelper {
     };
 
     
+    /**
+     * Extracts all unique web URLs from a given text.
+     * 
+     * @param text - The input string of arbitrary length from which to extract URLs.
+     * @returns An array of unique web URLs found in the input string. Returns an empty array if the input string is too short or no URLs are found.
+     */
+    public static ExtractUrls = (text: string): string[] => {
+        // Return early if the input string is shorter than the shortest possible URL.
+        if (text.length < 4) {
+            return [];
+        }
+
+        const matches:string[] = [];
+
+        const lines = TextHelper.SplitOnLineBreaks(text);
+
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            const terms = TextHelper.SplitOnWhitespaces(line);
+
+            for (let j = 0; j < terms.length; j++) {
+                const term = terms[j];
+                if (term[0] !== "@"){ //can't start with @ or it might be a handle
+                    const trimmedTerm = TextHelper.TrimChars(term, [".", ",", ":" , "/" , "?" , "#" , "[" , "]" , "@"]);
+                    if (TextHelper.IsUrl(trimmedTerm)){
+                        matches.push(trimmedTerm);
+                    }
+                }
+            }
+        }
+
+        // Use a Set to ensure uniqueness of URLs.
+        const uniqueUrls = new Set(matches);
+
+        // Convert the Set to an array and return it.
+        return Array.from(uniqueUrls);
+    };
+
+    public static IsUrl = (text: string): boolean => {
+        if (text.length < 4) return false;
+        if (text.indexOf(".") < 0) return false;
+        
+        const origLen = text.length;
+        
+        while (text.startsWith("http://") || text.startsWith("https://")){
+            if (text.startsWith("http://")){
+                text = text.slice(7);
+            } else if (text.startsWith("https://")){
+                text = text.slice(8);
+            }
+        }
+
+        if (text.length < origLen){
+            //don't want it to begin with any of these
+            const trimmedTerm = TextHelper.TrimStartingChars(text, [".", ",", ":" , "/" , "?" , "#" , "[" , "]" , "@"]);
+            if (text.length > trimmedTerm.length){
+                return false;
+            }
+        }
+
+        let first = TextHelper.SplitOnChars(text, [",", ":" , "/" , "?" , "#" , "[" , "]"])[0];    
+        first = TextHelper.TrimChars(first, [".", "@"]);
+        if (first.lastIndexOf("@") > -1){
+            let firstArray = first.split("@");
+            first = firstArray[firstArray.length-1]; //get last element (ie., the first after the last @ sign)            
+        }
+        first = TextHelper.TrimChars(first, ["."]);
+
+        if (first.indexOf(".") > -1){
+            let firstArray = first.split(".");
+            if (firstArray[firstArray.length-1].length > 1 && firstArray[firstArray.length-2].length > 0){
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+
+    /**
+   * Splits a string into an array of non-empty lines.
+   * 
+   * @param input - The input string to split.
+   * @returns An array of non-empty lines.
+   */
+    public static SplitOnLineBreaks(input: string): string[] {
+        // Split the string into lines and filter out empty ones.
+        return input.split(/\r?\n/).map(line => line.trim()).filter(line => line.length > 0);
+    }
+
+    /**
+     * Splits a string into an array of non-empty elements by whitespace.
+     * 
+     * @param input - The input string to split.
+     * @returns An array of non-empty elements.
+     */
+    public static SplitOnWhitespaces(input: string): string[] {
+        // Split the string on whitespace and filter out empty elements.
+        return input.split(/\s+/).filter(element => element.length > 0);
+    }
+
+    /**
+     * Splits a string into an array of substrings wherever any of the characters 
+     * in the input array appear. Empty elements are removed from the result.
+     * 
+     * @param text - The input string to split.
+     * @param input - An array of characters to split on.
+     * @returns An array of non-empty substrings.
+     */
+    public static SplitOnChars(text: string, input: string[]): string[] {
+        let result: string[] = [];
+        let currentSubstring = '';
+
+        // Iterate over each character in the text.
+        for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+
+        // If the character is in the input array, save the current substring and reset.
+        if (input.includes(char)) {
+            if (currentSubstring.length > 0) {
+            result.push(currentSubstring);
+            currentSubstring = '';
+            }
+        } else {
+            // Otherwise, add the character to the current substring.
+            currentSubstring += char;
+        }
+        }
+
+        // If there's any remaining non-empty substring, add it to the result.
+        if (currentSubstring.length > 0) {
+        result.push(currentSubstring);
+        }
+
+        return result;
+    }
+
+    /**
+     * Trims a string, removing any characters from the beginning or end
+     * that are in the provided array of characters.
+     * 
+     * @param input - The input string to trim.
+     * @param charsToRemove - An array of characters to remove from the start or end of the string.
+     * @returns The trimmed string.
+     */
+    public static TrimChars(input: string, charsToRemove: string[]): string {
+        // Trim from the start
+        let start = 0;
+        while (start < input.length && charsToRemove.includes(input[start])) {
+            start++;
+        }
+    
+        // Trim from the end
+        let end = input.length - 1;
+        while (end >= start && charsToRemove.includes(input[end])) {
+            end--;
+        }
+    
+        // Return the trimmed substring
+        return input.slice(start, end + 1);
+    }
+    public static TrimStartingChars(input: string, charsToRemove: string[]): string {
+        // Trim from the start
+        let start = 0;
+        while (start < input.length && charsToRemove.includes(input[start])) {
+            start++;
+        }
+    
+        // Return the trimmed substring
+        return input.slice(start);
+    }
+      
+      
+      
+
 }
