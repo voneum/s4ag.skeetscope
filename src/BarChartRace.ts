@@ -13,7 +13,9 @@ export class BarChartRace {
     private _name: string = "";
     private _pointerLocation: number[] | null = null;
     private _pointerTerm: string = "";
-
+    private _ptDown: number[] = [0, 0];
+    private _ptUp: number[] = [0, 0];
+    
     private _wordColors: Map<string, string> = new Map(); // Maps words to their assigned colors
     //private _maxCount: number = 0; // Maximum count for the words (used to scale bars)
     private _currentMaxWordCount = 0; // Current maximum word count in the animation
@@ -70,9 +72,20 @@ export class BarChartRace {
             this._pointerLocation = null;
             this._pointerTerm = "";
         }, false);
+        this._canvas.addEventListener("pointerup", (ev:PointerEvent) => {
+            this._ptUp = [ev.offsetX, ev.offsetY];
+        });
+    
         this._canvas.addEventListener("pointerdown", (ev:PointerEvent) => {
-            // this._pointerLocation = this._getPointerCoords(ev);
-            // this._pointerTerm = this._getPointerWord(this._pointerLocation);
+            this._ptDown = [ev.offsetX, ev.offsetY];            
+        });
+        
+        this._canvas.addEventListener("click", (ev) => {
+            let {_ptDown, _ptUp} = this;
+            let d = Math.hypot(_ptUp[0] - _ptDown[0], _ptUp[1] - _ptDown[1]);
+            if (d > 5){
+                return;
+            }
             
             if (this._pointerTerm.length > 0) {
                 if (this._pointerTerm[0] === "#" && this._pointerTerm.length > 1){

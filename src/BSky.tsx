@@ -603,9 +603,9 @@ export const BSky = () => {
           </Show>
           <button onclick={clearFeed} style="padding:5px;font-size:20px;">Clear</button>
         </div>
-        <div style="position: absolute; right:45px;bottom:5px;">
+        {/* <div style="position: absolute; right:45px;bottom:5px;">
           <button onclick={listTerms}>boooo</button>
-        </div>
+        </div> */}
         <div style="position: absolute; right:5px;bottom:5px;">
           <a href="https://github.com/voneum/s4ag.skeetscope" target="_blank" innerHTML={SVGs.GithubLogo} title='GitHub'></a>
         </div>
