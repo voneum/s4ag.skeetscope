@@ -13,8 +13,8 @@ export class BarChartRace {
     private _name: string = "";
     private _pointerLocation: number[] | null = null;
     private _pointerTerm: string = "";
-    private _ptDown: number[] = [0, 0];
-    private _ptUp: number[] = [0, 0];
+    private _pointerDownLocation: number[] = [0, 0];
+    private _pointerUpLocation: number[] = [0, 0];
     
     private _wordColors: Map<string, string> = new Map(); // Maps words to their assigned colors
     //private _maxCount: number = 0; // Maximum count for the words (used to scale bars)
@@ -73,17 +73,16 @@ export class BarChartRace {
             this._pointerTerm = "";
         }, false);
         this._canvas.addEventListener("pointerup", (ev:PointerEvent) => {
-            this._ptUp = [ev.offsetX, ev.offsetY];
+            this._pointerUpLocation = [ev.offsetX, ev.offsetY];
         });
     
         this._canvas.addEventListener("pointerdown", (ev:PointerEvent) => {
-            this._ptDown = [ev.offsetX, ev.offsetY];            
+            this._pointerDownLocation = [ev.offsetX, ev.offsetY];            
         });
         
         this._canvas.addEventListener("click", (ev) => {
-            let {_ptDown, _ptUp} = this;
-            let d = Math.hypot(_ptUp[0] - _ptDown[0], _ptUp[1] - _ptDown[1]);
-            if (d > 5){
+            const distance = Math.hypot(this._pointerUpLocation[0] - this._pointerDownLocation[0], this._pointerUpLocation[1] - this._pointerDownLocation[1]);
+            if (distance > 5){
                 return;
             }
             
@@ -330,7 +329,7 @@ export class BarChartRace {
         }
 
         // Remove any excess bars that are no longer in the words list
-        if (this._activeBars.length > BarChartRace.BAR_COUNT) {
+        if (this._activeBars.length > BarChartRace.BAR_COUNT || words.length === 0) {
             for (let i = 0; i < this._activeBars.length; i++) {
                 const currentWord = this._activeBars[i].Word;
                 const index = words.findIndex((r) => { return r.word === currentWord; });

@@ -273,16 +273,19 @@ export const BSky = () => {
 
     switch (stringType_GetterFn()){
       case stringTypeOptions[0]:
-        if (!wordBags || wordBags.length === 0) return;
-        topTerms = wordBags[index].GetTopTerms(BarChartRace.BAR_COUNT,noise_GetterFn(),safe_GetterFn());
+        if (!wordBags || wordBags.length > 0) {          
+          topTerms = wordBags[index].GetTopTerms(BarChartRace.BAR_COUNT,noise_GetterFn(),safe_GetterFn());
+        }
         break;
       case stringTypeOptions[1]:
-        if (!mentionBags || mentionBags.length === 0) return;
-        topTerms = mentionBags[index].GetTopTerms(BarChartRace.BAR_COUNT,safe_GetterFn(),safe_GetterFn());
+        if (!mentionBags || mentionBags.length > 0) { 
+          topTerms = mentionBags[index].GetTopTerms(BarChartRace.BAR_COUNT,safe_GetterFn(),safe_GetterFn());
+        }
         break;
       case stringTypeOptions[2]:
-        if (!hashtagBags || hashtagBags.length === 0) return;
-        topTerms = hashtagBags[index].GetTopTerms(BarChartRace.BAR_COUNT,safe_GetterFn(),safe_GetterFn());
+        if (!hashtagBags || hashtagBags.length > 0) { 
+          topTerms = hashtagBags[index].GetTopTerms(BarChartRace.BAR_COUNT,safe_GetterFn(),safe_GetterFn());
+        }
         break;
       default:
         const errMsg = `The string type was not understood ${stringType_GetterFn()}`;
