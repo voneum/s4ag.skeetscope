@@ -188,9 +188,13 @@ export class BarChartRace {
      * @param words An array of objects containing words and their corresponding counts
      */
     public UpdateWords(words: { word: string, count: number }[]) {
+        
+        //if (!this.IsAnimating) console.error("WASN'T animating!");
+        
         // Stop the animation if it is already running
         if (this.IsAnimating) {
             this.StopAnimation();
+            //console.log("StopAnimation");
         }
 
         // Sync the active bars with the new data
@@ -205,6 +209,7 @@ export class BarChartRace {
      * Starts the animation loop.
      */
     private animate() {
+        //console.log("animate");
         const elapsedTime = performance.now() - this._startTime;
 
         // Calculate the progress of the animation based on elapsed time

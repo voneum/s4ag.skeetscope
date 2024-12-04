@@ -44,26 +44,34 @@ export const BSky = () => {
   const stringTypeOptions = ["Words", "Mentions", "Hashtags"];
 
   
-  const [activeBars_GetterFn, activeBars_SetterFn] = createSignal<number>(10);
+  const [activeBars_GetterFn, activeBars_SetterFn] = createSignal<number>(5);
 
   // React to changes in selectedOption
   createEffect((prev) => {
     console.log("Selected option changed:", prev, stringType_GetterFn());
 
-    if (prev) { //seems to want to be undefined when it doesn't change ??
+    if (prev !== stringType_GetterFn()) { 
       blankCharts();
-      updateAllCharts();
+      updateAllCharts(true);
     }
     //clearFeed();
+
+    return stringType_GetterFn();
   });
 
-  createEffect(() => {
-    console.log("safe mode:", safe_GetterFn());
-    //updateAllCharts();
+  createEffect((prev) => {
+    console.log("safe mode:", prev, safe_GetterFn());
+    if (prev !== safe_GetterFn()) { 
+      updateAllCharts(false);
+    }
+    return safe_GetterFn();
   });
-  createEffect(() => {
-    console.log("noise mode:", noise_GetterFn());
-    //updateAllCharts();
+  createEffect((prev) => {
+    console.log("noise mode:", prev, noise_GetterFn());
+    if (prev !== noise_GetterFn()) { 
+      updateAllCharts(true);
+    }
+    return noise_GetterFn();
   });
 
   
@@ -221,16 +229,19 @@ export const BSky = () => {
     
     
     if (updateCharts){
-      updateAllCharts();
+      updateAllCharts(false);
     }
 
     updateCharts = false;
 
   });
 
-  function updateAllCharts(){
+  /**
+   * 'force' overrides waiting for animation to stop.
+   */
+  function updateAllCharts(force:boolean = false){
     for (let i = 0; i < 9; i++) {
-      processTerms(i);        
+      processTerms(i,force);        
     }
   }
 
@@ -266,11 +277,8 @@ export const BSky = () => {
     }
   }
 
-
-  function processTerms(index: number){
-
+  function getTopTerms(index: number): { word: string; count: number}[] {
     let topTerms: { word: string; count: number}[] = [];
-
     switch (stringType_GetterFn()){
       case stringTypeOptions[0]:
         if (!wordBags || wordBags.length > 0) {          
@@ -292,8 +300,15 @@ export const BSky = () => {
         console.log(errMsg);
         throw new Error(errMsg);
     }
+
+    return topTerms;
+  }
+
+  function processTerms(index: number, force: boolean = false){
+
+    const topTerms = getTopTerms(index); 
       
-    if (!barcharts[index].IsAnimating){
+    if (barcharts.length > 0 && (!barcharts[index].IsAnimating || force)){
       barcharts[index].UpdateWords(topTerms);
     }
 
@@ -467,6 +482,9 @@ export const BSky = () => {
     blankCharts();
     
   }
+  /**
+   * Performs a 'clear' operation on all barcharts (which totally clears the data and chart)
+   */
   function blankCharts(){
     barcharts.forEach((barchart) =>{
       barchart.Clear();
@@ -568,8 +586,8 @@ export const BSky = () => {
                 activeBars_SetterFn(Number.parseInt(e.currentTarget.value));
               }}
             >
-              <option value="5">5</option>
-              <option value="10" selected>10</option>
+              <option value="5" selected>5</option>
+              <option value="10" >10</option>
               <option value="20">20</option>
             </select>
           </div>
