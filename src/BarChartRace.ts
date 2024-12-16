@@ -11,6 +11,7 @@ export class BarChartRace {
     private _ctx: CanvasRenderingContext2D; // The 2D drawing context for the canvas
     private _activeBars: BarChartBar[] = []; // Array of active bars in the chart
     private _name: string = "";
+    private _lastSeenProgress: number = 1;
     private _pointerLocation: number[] | null = null;
     private _pointerTerm: string = "";
     private _pointerDownLocation: number[] = [0, 0];
@@ -71,6 +72,10 @@ export class BarChartRace {
             this._canvas.style.cursor = "unset";
             this._pointerLocation = null;
             this._pointerTerm = "";
+
+            //_pointerTerm stays until a chart refresh (problem if charts are paused). Do a refresh manually.
+            this.draw(this._lastSeenProgress);
+
         }, false);
         this._canvas.addEventListener("pointerup", (ev:PointerEvent) => {
             this._pointerUpLocation = [ev.offsetX, ev.offsetY];
@@ -231,12 +236,15 @@ export class BarChartRace {
      * @param progress The progress of the animation, ranging from 0 to 1
      */
     private draw(progress: number) {
+
+        this._lastSeenProgress = progress;
+
         // Clear the canvas
         this._ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
 
         // Update and render each active bar
         this._activeBars.forEach((entry, index) => {
-            entry.UpdateRender(progress, this._currentMaxWordCount);
+            entry.UpdateRender(this._lastSeenProgress, this._currentMaxWordCount);
         });
 
         this._drawTooltip();

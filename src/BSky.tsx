@@ -314,7 +314,7 @@ export const BSky = () => {
 
   }
 
-  onMount(() => {
+  onMount(async () => {
     //const div: HTMLDivElement = document.createElement("div");
 
     let divs: HTMLDivElement[] = [];
@@ -331,9 +331,9 @@ export const BSky = () => {
       barcharts.push(new BarChartRace(title, divs[i]));
 
       if (i < 8){
-        filterTerms.push(Terms.AdultHashtagsByLength(i+3));
+        filterTerms.push(await Terms.AdultHashtagsByLength(i+3));
       } else {
-        filterTerms.push(Terms.AdultHashtagsByLengthGreaterThan(i+3-1));
+        filterTerms.push(await Terms.AdultHashtagsByLengthGreaterThan(i+3-1));
       }
       if (i < 8){
         noiseTerms.push(Terms.TermsByLength(Terms.NoiseTerms(), i+3))
@@ -432,13 +432,48 @@ export const BSky = () => {
 
     jetstream.start();
 
+
+    // Attach event listener
+    window.addEventListener("keydown", handleKeyDown);
+  
+
   })
+
+  const handleKeyDown = (event: KeyboardEvent) => {
+    if (event.shiftKey && event.key === "T") {
+      handleShiftT();
+    }
+  };
+
+  const handleShiftT = async () => {
+    const terms: string[] = await Terms.AdultTerms();
+    downloadString("terms.txt", terms.map((t)=>{ return `#${t}`;} ).join(" "));
+  };
+  const downloadString = (filename: string, content: string) => {
+    // Create a blob with the content
+    const blob = new Blob([content], { type: "text/plain" });
+
+    // Create a temporary <a> element
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); // Create a download URL
+    a.download = filename; // Set the download filename
+
+    // Trigger the download
+    document.body.appendChild(a); // Append the element to the DOM
+    a.click(); // Simulate a click
+    document.body.removeChild(a); // Remove the element from the DOM
+
+    // Revoke the object URL to free up memory
+    URL.revokeObjectURL(a.href);
+  };
+
 
   onCleanup(() => {
     barcharts.forEach((barchart) =>{
       barchart.Destroy();
     });
-    
+    window.removeEventListener("keydown", handleKeyDown);
+
   });
 
   function startFeed(){
