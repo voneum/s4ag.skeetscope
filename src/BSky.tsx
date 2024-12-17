@@ -12,6 +12,7 @@ import { BarChartRace } from './BarChartRace';
 import RadioButtonArray from './RadioButtonArray';
 import { Terms } from './Terms';
 import toast, { Toaster } from 'solid-toast';
+import { ITerm } from './IBarChartBarConfig';
 
 
 export const BSky = () => {
@@ -21,7 +22,7 @@ export const BSky = () => {
   let mentionBags: TermBag[] = [];
   let hashtagBags: TermBag[] = [];
   let barcharts:BarChartRace[] = [];
-  let filterTerms:Set<string>[] = [];
+  let unsafeTerms:Set<string>[] = [];
   let noiseTerms:Set<string>[] = [];
   let termCount = 0;
   let toastId: string = "";
@@ -34,7 +35,7 @@ export const BSky = () => {
   const [socketOpen_GetterFn, socketOpen_SetterFn] = createSignal<boolean>(false);
   const [divElements_GetterFn, divElements_SetterFn] = createSignal<HTMLDivElement[]>([]);
   const [safe_GetterFn, safe_SetterFn] = createSignal<boolean>(true);
-  const [noise_GetterFn, noise_SetterFn] = createSignal<boolean>(false);
+  const [noiseAllowed_GetterFn, noiseAllowed_SetterFn] = createSignal<boolean>(true);
 
   const [wordCounts_GetterFn, wordCounts_SetterFn] = createStore<number[]>([]) // A store that is an array
   const [mentionCounts_GetterFn, mentionCounts_SetterFn] = createStore<number[]>([]) // A store that is an array
@@ -60,18 +61,18 @@ export const BSky = () => {
   });
 
   createEffect((prev) => {
-    console.log("safe mode:", prev, safe_GetterFn());
+    console.log("safe only?:", prev, safe_GetterFn());
     if (prev !== safe_GetterFn()) { 
-      updateAllCharts(false);
+      updateAllCharts(true);
     }
     return safe_GetterFn();
   });
   createEffect((prev) => {
-    console.log("noise mode:", prev, noise_GetterFn());
-    if (prev !== noise_GetterFn()) { 
+    console.log("noise allowed?:", prev, noiseAllowed_GetterFn());
+    if (prev !== noiseAllowed_GetterFn()) { 
       updateAllCharts(true);
     }
-    return noise_GetterFn();
+    return noiseAllowed_GetterFn();
   });
 
   
@@ -277,12 +278,12 @@ export const BSky = () => {
     }
   }
 
-  function getTopTerms(index: number): { word: string; count: number}[] {
-    let topTerms: { word: string; count: number}[] = [];
+  function getTopTerms(index: number): ITerm[] {
+    let topTerms: ITerm[] = [];
     switch (stringType_GetterFn()){
       case stringTypeOptions[0]:
         if (!wordBags || wordBags.length > 0) {          
-          topTerms = wordBags[index].GetTopTerms(BarChartRace.BAR_COUNT,noise_GetterFn(),safe_GetterFn());
+          topTerms = wordBags[index].GetTopTerms(BarChartRace.BAR_COUNT,noiseAllowed_GetterFn(),safe_GetterFn());
         }
         break;
       case stringTypeOptions[1]:
@@ -319,7 +320,7 @@ export const BSky = () => {
 
     let divs: HTMLDivElement[] = [];
     barcharts = [];
-    filterTerms = [];
+    unsafeTerms = [];
     noiseTerms = [];
     wordBags = [];
     mentionBags = [];
@@ -331,9 +332,9 @@ export const BSky = () => {
       barcharts.push(new BarChartRace(title, divs[i]));
 
       if (i < 8){
-        filterTerms.push(await Terms.AdultHashtagsByLength(i+3));
+        unsafeTerms.push(await Terms.AdultHashtagsByLength(i+3));
       } else {
-        filterTerms.push(await Terms.AdultHashtagsByLengthGreaterThan(i+3-1));
+        unsafeTerms.push(await Terms.AdultHashtagsByLengthGreaterThan(i+3-1));
       }
       if (i < 8){
         noiseTerms.push(Terms.TermsByLength(Terms.NoiseTerms(), i+3))
@@ -341,8 +342,8 @@ export const BSky = () => {
         noiseTerms.push(Terms.TermsByLengthGreaterThan(Terms.NoiseTerms(),i+3-1));
       }
       wordBags.push(new TermBag(noiseTerms[i]));
-      mentionBags.push(new TermBag(filterTerms[i]));
-      hashtagBags.push(new TermBag(filterTerms[i]));
+      mentionBags.push(new TermBag(unsafeTerms[i]));
+      hashtagBags.push(new TermBag(unsafeTerms[i]));
     }
     divElements_SetterFn(divs);
 
@@ -493,8 +494,8 @@ export const BSky = () => {
     hashtagBags.length = 0;
     for (let i = 0; i < 9; i++) {
       wordBags.push(new TermBag(noiseTerms[i]));
-      mentionBags.push(new TermBag(filterTerms[i]));
-      hashtagBags.push(new TermBag(filterTerms[i]));      
+      mentionBags.push(new TermBag(unsafeTerms[i]));
+      hashtagBags.push(new TermBag(unsafeTerms[i]));      
     }
     // wordBags = [
     //   new TermBag(filterTerms[0]),
@@ -605,8 +606,8 @@ export const BSky = () => {
             
             <Show when={stringType_GetterFn() === stringTypeOptions[0]}>
               <label for="noiseCheck"style="margin-right: 3px;">Noise</label>
-                <input id="noiseCheck" type='checkbox' checked={!noise_GetterFn()} style="margin-right: 13px;" onChange={(e) => {
-                  noise_SetterFn(!e.currentTarget.checked);
+                <input id="noiseCheck" type='checkbox' checked={noiseAllowed_GetterFn()} style="margin-right: 13px;" onChange={(e) => {
+                  noiseAllowed_SetterFn(e.currentTarget.checked);
                 }} />
             </Show>
 

@@ -19,6 +19,12 @@ export interface IBarChartBarConfig {
     count: number;
 
     /**
+     * The color of te bar label.
+     * Should differ depending on the safe, and noise status.
+     */
+    wordColor: string;
+
+    /**
      * The minimum value across all bars currently displayed in the chart.
      */
     minCount: number;
@@ -36,7 +42,7 @@ export interface IBarChartBarConfig {
     /**
      * The color of the bar, specified as a CSS color string (e.g., "red", "#FF0000").
      */
-    color: string;
+    barColor: string;
 
     /**
      * The maximum number of bars that can be displayed in the chart.
@@ -53,4 +59,11 @@ export interface IBarChartBarConfig {
      * The width in pixels reserved for the label gutter (space for labels).
      */
     labelGutterWidth: number;
+}
+
+export interface ITerm { 
+    word: string; 
+    count: number,
+    isNoise: boolean,
+    isSafe: Boolean
 }

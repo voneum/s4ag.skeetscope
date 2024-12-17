@@ -1,15 +1,19 @@
 // 
+
+import { ITerm } from "./IBarChartBarConfig";
+
 /**
  * A class to manage words and their counts, maintaining a sorted order.
  */
 export class TermBag {
     // Backing store for words and counts, kept in descending order by count.
-    private _termBag: { word: string; count: number }[];
+    private _termBag: ITerm[];
     // Map to track word-to-index mapping in the array.
     private _termIndexMap: Map<string, number>;
 
     private _filterTerms: Set<string>;
-
+    private readonly _unsafe = ["fuck","cunt","shit", "faggot", "bitch", "cocksu", "slut", "wank", "twat", "blowjob", "arsehole", "asshole", "whore", "xxx"];
+    
     constructor(filterTerms: Set<string>) {
         this._termBag = [];
         this._termIndexMap = new Map();
@@ -46,8 +50,23 @@ export class TermBag {
                 newIndex--;
             }
         } else {
+
+            let isSafe = true;
+
+            for (let j = 0; j < this._unsafe.length; j++) {
+                const term = this._unsafe[j];
+                if (word.indexOf(term) > -1){
+                    isSafe = false;
+                    break;
+                }
+            }
+            const isNoise = this._filterTerms.has(word);
+            if (isNoise && word[0] === "#" ){
+                isSafe = false;
+            }
+            
             // Add a new word with a count of 1 at the end of the array.
-            const newWord = { word, count: 1 };
+            const newWord: ITerm = { word: word, count: 1, isSafe: isSafe, isNoise: isNoise };
             this._termBag.push(newWord);
             this._termIndexMap.set(word, this._termBag.length - 1);    
         }
@@ -59,31 +78,29 @@ export class TermBag {
      * @param n - The number of top words to retrieve.
      * @returns An array of objects containing the word and its count.
      */
-    public GetTopTerms(n: number, filter:boolean = false, safe:boolean = false ): { word: string; count: number}[] {
-        if (filter || safe){
-            const unsafe = ["fuck","cunt","shit", "faggot", "bitch", "cocksu", "slut", "wank", "twat", "blowjob", "arsehole", "asshole", "whore"];
+    public GetTopTerms(n: number, noiseAllowed:boolean = false, safeOn:boolean = false ): ITerm[] {
+        if (!noiseAllowed || safeOn){
+            
             let count = 0;
-            const result: { word: string; count: number }[] = [];
+            const result: ITerm[] = [];
             for (let i = 0; i < this._termBag.length; i++) {
                 const element = this._termBag[i]; 
 
-                if (safe){
-                    let foundUnsafe = false;
-                    for (let j = 0; j < unsafe.length; j++) {
-                        const term = unsafe[j];
-                        if (element.word.indexOf(term) > -1){
-                            foundUnsafe = true;
-                            break;
-                        }
+                if (safeOn && !element.isSafe){                    
+                    //result.push(element)
+                    continue;
+                } else if (!safeOn && !element.isSafe) {
+                    result.push(element)
+                    count++;
+                    if (count >= n){ 
+                        break;
                     }
-                    if (foundUnsafe) {
-                        continue;
-                    }
+                    continue;
                 }
 
                 //can only arrive here if the word is safe, or if thre is no safe filter on
 
-                const filtered = filter ? this._filterTerms.has(element.word) : false;
+                const filtered = (!noiseAllowed && element.isNoise);
                 if (!filtered) {
                     result.push(element)
                     count++;

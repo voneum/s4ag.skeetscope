@@ -11,6 +11,8 @@ export class BarChartBar {
     private _maxBarCount: number;
     // Word associated with the bar (label).
     private _word: string;
+    // Color associated with the bar label.
+    private _wordColor: string;
     // Previous count value for smooth transitions.
     private _lastCount: number = 0;
     // Previous displayed count value for proportional resizing during transitions.
@@ -48,10 +50,11 @@ export class BarChartBar {
 
         this._canvas = config.canvas;
         this._word = config.word;
+        this._wordColor = config.wordColor;
         this._targetCount = config.count;
         this._targetRank = config.rank;
         this._lastRank = config.maxBarCount + 2; // Start rank outside visible range.
-        this._color = config.color;
+        this._color = config.barColor;
         this._maxBarCount = config.maxBarCount;
         this._padding = config.padding;
         this._labelGutterWidth = this._trimGutterWidth(config.labelGutterWidth);
@@ -151,7 +154,7 @@ export class BarChartBar {
         ctx.fill();
 
         // Draw the word label.
-        this._drawText(ctx, this._word, this._padding + this._labelGutterWidth - 5, barCenterHeight, "right");
+        this._drawText(ctx, this._word, this._wordColor, this._padding + this._labelGutterWidth - 5, barCenterHeight, "right");
     
         // Draw the count label, positioned inside or outside the bar based on its width.
         const inside = barWidth / width > BarChartBar.BAR_INSIDE_THRESHOLD;
@@ -159,7 +162,7 @@ export class BarChartBar {
         const xPos = inside
             ? this._padding + this._labelGutterWidth + barWidth - 5
             : this._padding + this._labelGutterWidth + barWidth + 5;
-        this._drawText(ctx, Math.round(transitionCount).toString(), xPos, barCenterHeight, align);
+        this._drawText(ctx, Math.round(transitionCount).toString(), "black", xPos, barCenterHeight, align);
     }
 
     /**
@@ -171,7 +174,7 @@ export class BarChartBar {
      * @param y - The y-coordinate of the text position.
      * @param align - The text alignment ("left", "right", "center").
      */
-    private _drawText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, align: CanvasTextAlign) {
+    private _drawText(ctx: CanvasRenderingContext2D, text: string, wordColor:string, x: number, y: number, align: CanvasTextAlign) {
 
         let url = "";
         let pixLower = 0;
@@ -190,7 +193,7 @@ export class BarChartBar {
         ctx.font = BarChartBar.FONT;
         ctx.textAlign = align;
         ctx.textBaseline = url.length === 0 ? "middle" : "bottom";
-        ctx.fillStyle = BarChartBar.TEXT_COLOR;
+        ctx.fillStyle = wordColor;
         ctx.fillText(text, x, y - pixLower);
 
         if (url.length > 0){

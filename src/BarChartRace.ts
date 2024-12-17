@@ -1,5 +1,5 @@
 import { BarChartBar } from "./BarChartBar";
-import { IBarChartBarConfig } from "./IBarChartBarConfig";
+import { IBarChartBarConfig, ITerm } from "./IBarChartBarConfig";
 
 /**
  * BarChartRace class creates and manages an animated bar chart race.
@@ -192,7 +192,7 @@ export class BarChartRace {
      * Updates the words and their counts displayed on the chart, and restarts the animation if necessary.
      * @param words An array of objects containing words and their corresponding counts
      */
-    public UpdateWords(words: { word: string, count: number }[]) {
+    public UpdateWords(words: ITerm[]) {
         
         //if (!this.IsAnimating) console.error("WASN'T animating!");
         
@@ -298,7 +298,7 @@ export class BarChartRace {
      * Syncs the current word counts with the active bars. Creates or updates bars as necessary.
      * @param words An array of objects containing words and their corresponding counts
      */
-    private _syncActiveBars(words: { word: string; count: number }[]) {
+    private _syncActiveBars(words: ITerm[]) {
         const maxLetterCount = words.reduce((max, item) => Math.max(max, item.word.length), -Infinity);
 
         this._currentMaxWordCount = 0;
@@ -328,10 +328,11 @@ export class BarChartRace {
                     canvas: this._canvas,
                     word: currentWord,
                     count: currentCount,
+                    wordColor: words[i].isSafe === false ? "red" : words[i].isNoise ? "blue" : "black",
                     rank: i + 1,
                     minCount: currentMinWordCount,
                     maxCount: this._currentMaxWordCount,
-                    color: this.getColorForWord(currentWord),
+                    barColor: this.getColorForWord(currentWord),
                     maxBarCount: BarChartRace.BAR_COUNT,
                     padding: BarChartRace.DEFAULT_PADDING,
                     labelGutterWidth: BarChartRace.DEFAULT_LABEL_GUTTER + maxLetterCount * 5,
