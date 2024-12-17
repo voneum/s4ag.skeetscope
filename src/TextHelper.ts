@@ -6,7 +6,7 @@ export class TextHelper {
      * @param text - The input text to process.
      * @returns An array of words containing only alphabetic characters, hashtags, or mentions.
      */
-    public static splitToAlphabeticWords = (text: string): string[] => {
+    public static splitToAlphabeticWords2 = (text: string): string[] => {
         const words: string[] = [];
         let currentWord: string = "";
 
@@ -35,7 +35,53 @@ export class TextHelper {
 
         return words;
     };
-    
+
+    /**
+     * Splits a string into individual words containing only alphabetic characters,
+     * handling hashtags, mentions, and contractions such as "wasn't" or "could've."
+     * @param text - The input text to process.
+     * @returns An array of words containing only alphabetic characters, hashtags, mentions, and contractions.
+     */
+    public static splitToAlphabeticWords = (text: string): string[] => {
+        const words: string[] = [];
+        let currentWord: string = "";
+
+        for (let i = 0; i < text.length; i++) {
+            const char = text[i];
+
+            // Match alphabetic characters or apostrophes in contractions
+            if (/\p{L}/u.test(char) || (char === "'" && /\p{L}/u.test(text[i + 1]))) {
+                currentWord += char;
+            } else if (
+                (char === "#" || char === "@") &&
+                currentWord.length === 0 &&
+                i + 1 < text.length &&
+                /\p{L}/u.test(text[i + 1])
+            ) {
+                currentWord += char;
+            } else if (currentWord.length > 0) {
+                // Handle contractions ending patterns like n't, 've, 're
+                if (
+                    currentWord.endsWith("'") &&
+                    (text[i] === "t" || text[i] === "v" || text[i] === "r") &&
+                    (text[i + 1] === undefined || /\s|\p{P}/u.test(text[i + 1]))
+                ) {
+                    currentWord += text[i];
+                } else {
+                    words.push(currentWord);
+                    currentWord = "";
+                }
+            }
+        }
+
+        // Add the last word if it exists
+        if (currentWord.length > 0) {
+            words.push(currentWord);
+        }
+
+        return words;
+    };
+
     /**
      * Extracts Bluesky handles from the input text. NOTE: Will current return "@123.start.with.number" as a valid handle. Not sure about this...
      * @param text - The input text to process.

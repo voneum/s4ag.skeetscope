@@ -106,6 +106,27 @@ describe("TextHelper.splitToAlphabeticWords - Extended Tests", () => {
         );
         expect(result).toEqual(["Start", "@mention", "middle", "#hashTag", "word", "and", "#end"]);
     });
+
+    it("should handle contractions correctly", () => {
+        const result = TextHelper.splitToAlphabeticWords("He wasn't there because he couldn't've known.");
+        expect(result).toEqual(["He", "wasn't", "there", "because", "he", "couldn't've", "known"]);
+    });
+    
+    it("should handle words ending in 're correctly", () => {
+        const result = TextHelper.splitToAlphabeticWords("We're going to the park.");
+        expect(result).toEqual(["We're", "going", "to", "the", "park"]);
+    });
+    
+    it("should handle words ending in 've correctly", () => {
+        const result = TextHelper.splitToAlphabeticWords("They could've been better.");
+        expect(result).toEqual(["They", "could've", "been", "better"]);
+    });
+    
+    it("should handle a mix of contractions and regular words", () => {
+        const result = TextHelper.splitToAlphabeticWords("You're not sure if it wasn't obvious.");
+        expect(result).toEqual(["You're", "not", "sure", "if", "it", "wasn't", "obvious"]);
+    });
+    
 });
 
 
