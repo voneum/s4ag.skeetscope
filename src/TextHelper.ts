@@ -1,8 +1,10 @@
 export class TextHelper {
+    
+
     /**
      * Splits a string into individual words containing only alphabetic characters.
      * @param text - The input text to process.
-     * @returns An array of words containing only alphabetic characters.
+     * @returns An array of words containing only alphabetic characters, hashtags, or mentions.
      */
     public static splitToAlphabeticWords = (text: string): string[] => {
         const words: string[] = [];
@@ -11,33 +13,29 @@ export class TextHelper {
         for (let i = 0; i < text.length; i++) {
             const char = text[i];
 
-            if ((char >= "A" && char <= "Z") || (char >= "a" && char <= "z")) {
-                // Append alphabetic characters to the current word
+            // Check if character is alphabetic using Unicode regex
+            if (/\p{L}/u.test(char)) {
                 currentWord += char;
             } else if (
                 (char === "#" || char === "@") &&
                 currentWord.length === 0 &&
-                i + 1 < text.length && 
-                ((text[i + 1] >= "A" && text[i + 1] <= "Z") || (text[i + 1] >= "a" && text[i + 1] <= "z"))
+                i + 1 < text.length &&
+                /\p{L}/u.test(text[i + 1])
             ) {
-                // Start a new word with # or @ if followed by alphabetic characters
                 currentWord += char;
             } else if (currentWord.length > 0) {
-                // Push the completed word and reset
                 words.push(currentWord);
                 currentWord = "";
             }
         }
 
-        // Add the last word if it exists
         if (currentWord.length > 0) {
             words.push(currentWord);
         }
 
         return words;
     };
-
-
+    
     /**
      * Extracts Bluesky handles from the input text. NOTE: Will current return "@123.start.with.number" as a valid handle. Not sure about this...
      * @param text - The input text to process.

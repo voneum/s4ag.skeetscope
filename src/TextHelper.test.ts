@@ -54,6 +54,60 @@ describe("TextHelper.splitToAlphabeticWords", () => {
     });
 });
 
+describe("TextHelper.splitToAlphabeticWords - Extended Tests", () => {
+    it("should handle words with Unicode characters", () => {
+        const result = TextHelper.splitToAlphabeticWords("café résumé naïve jalapeño");
+        expect(result).toEqual(["café", "résumé", "naïve", "jalapeño"]);
+    });
+
+    it("should handle hashtags and mentions with adjacent punctuation", () => {
+        const result = TextHelper.splitToAlphabeticWords("Check #this! Also, try @that.");
+        expect(result).toEqual(["Check", "#this", "Also", "try", "@that"]);
+    });
+
+    it("should include hashtags and mentions only if followed by alphabetic characters", () => {
+        const result = TextHelper.splitToAlphabeticWords("Hello #123 @456 #ABC @DEF");
+        expect(result).toEqual(["Hello", "#ABC", "@DEF"]);
+    });
+
+    it("should handle strings with a mix of valid and invalid hashtags and mentions", () => {
+        const result = TextHelper.splitToAlphabeticWords("#valid @mention #123456 invalid@");
+        expect(result).toEqual(["#valid", "@mention", "invalid"]);
+    });
+
+    it("should treat mixed alphabetic characters and punctuation correctly", () => {
+        const result = TextHelper.splitToAlphabeticWords("End. Start? This-is_a:test!");
+        expect(result).toEqual(["End", "Start", "This", "is", "a", "test"]);
+    });
+
+    it("should split words containing hyphens correctly", () => {
+        const result = TextHelper.splitToAlphabeticWords("co-op re-enter pre-test");
+        expect(result).toEqual(["co", "op", "re", "enter", "pre", "test"]);
+    });
+
+    it("should handle strings with consecutive hashtags and mentions", () => {
+        const result = TextHelper.splitToAlphabeticWords("#first##second @@third @@@fourth");
+        expect(result).toEqual(["#first", "#second", "@third", "@fourth"]);
+    });
+
+    it("should handle hashtags and mentions at the start or end of a string", () => {
+        const result = TextHelper.splitToAlphabeticWords("#start middle @end");
+        expect(result).toEqual(["#start", "middle", "@end"]);
+    });
+
+    it("should not include symbols or numbers inside words", () => {
+        const result = TextHelper.splitToAlphabeticWords("word123 test!word 456word");
+        expect(result).toEqual(["word", "test", "word", "word"]);
+    });
+
+    it("should handle long strings with multiple edge cases", () => {
+        const result = TextHelper.splitToAlphabeticWords(
+            "Start @mention-middle #hashTag123 456-word and ##end123!"
+        );
+        expect(result).toEqual(["Start", "@mention", "middle", "#hashTag", "word", "and", "#end"]);
+    });
+});
+
 
 describe("TextHelper.ExtractBlueskyHandles", () => {
     it("should extract valid Bluesky handles", () => {
