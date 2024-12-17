@@ -592,9 +592,14 @@ export const BSky = () => {
         <div style="margin-right:15px; align-self: center;display:flex;cursor:pointer;" onclick={displayHelp}>
           <div innerHTML={SVGs.BlueSkyHelp}></div>
           <a style="font-size:clamp(0.6rem, 2vw, 1rem);">What's this?</a>
-        </div>
+        </div> 
         <div style="margin-right:5px;font-size:clamp(0.75rem, 2vw, 1.1rem);display:block; align-self: center; text-align: end;white-space: nowrap;">
-          <div><span>New posts:</span> <span style="font-weight:bold;">{messageCount_GetterFn()}</span></div>
+          <div style="display:flex;justify-content: end;">
+            <Show when={socketOpen_GetterFn()}>
+              <div class={styles.loader}></div>
+            </Show>
+            <span>New posts:</span> <span style="font-weight:bold;">{messageCount_GetterFn()}</span>
+          </div>
           <div><span>Data received:</span> <span style="font-weight:bold;">{(dataReceived_GetterFn()/1000000).toFixed(1)}MB</span></div>
         </div>
         
