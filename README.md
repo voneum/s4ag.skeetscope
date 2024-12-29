@@ -1,4 +1,4 @@
-![](img/bluesky-skeetscope.jpg "Alt title text")  
+![](public/bluesky-skeetscope.jpg "Alt title text")  
 
 ## SkeetScope: What?
 
